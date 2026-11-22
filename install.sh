@@ -189,6 +189,14 @@ if [[ -f "$ROOT_DIR/foot/foot.ini" ]]; then
     cp -f "$ROOT_DIR/foot/foot.ini" "$CONFIG_HOME/foot/foot.ini"
 fi
 
+# Deploy Fastfetch & Minimal Arrow Prompt
+mkdir -p "$CONFIG_HOME/zenith/fastfetch"
+cp -rf "$ROOT_DIR/fastfetch/"* "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
+
+if [[ -f "$HOME/.bashrc" ]] && ! grep -q "zenith/scripts/prompt.sh" "$HOME/.bashrc"; then
+    printf '\n# Project Zenith Minimal Arrow Prompt\n[ -f "%s/scripts/prompt.sh" ] && source "%s/scripts/prompt.sh"\n' "$ROOT_DIR" "$ROOT_DIR" >> "$HOME/.bashrc"
+fi
+
 # Enable Foot server user service for sub-millisecond terminal launches
 systemctl --user enable --now foot-server.service 2>/dev/null || true
 
