@@ -236,7 +236,7 @@ Item {
                                 : root.section === "command-launcher"
                                     ? "Local history and terminal preferences"
                                 : root.section === "shortcuts"
-                                    ? "Keybinds managed by Odyssey"
+                                    ? "Keybinds managed by Zenith"
                                     : "Explicit external theme ownership"
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
@@ -296,7 +296,7 @@ Item {
                                 title: "Material"
                                 detail: Config.appearance.material === "glass"
                                     ? "Tinted translucent surfaces with compositor blur"
-                                    : "Odyssey's original opaque surface treatment"
+                                    : "Zenith's original opaque surface treatment"
                                 inlineLayout: true
                                 contentHeight: 36
                                 RowLayout {
@@ -325,7 +325,7 @@ Item {
                                 Layout.fillWidth: true
                                 title: "Surface opacity"
                                 detail: Math.round(Config.appearance.surfaceOpacity * 100)
-                                    + "% · Applies live to expanded Odyssey surfaces"
+                                    + "% · Applies live to expanded Zenith surfaces"
                                 inlineLayout: true
                                 contentHeight: 36
                                 SettingsSlider {
@@ -429,7 +429,7 @@ Item {
                                     ? AppearanceService.errorMessage
                                     : AppearanceService.statusMessage.length > 0
                                         ? AppearanceService.statusMessage
-                                        : "Palette changes update Odyssey and enabled integrations live."
+                                        : "Palette changes update Zenith and enabled integrations live."
                             }
 
                         }
@@ -441,7 +441,7 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
-                                title: "Odyssey idle policy"
+                                title: "Zenith idle policy"
                                 detail: IdleService.statusLabel
                                 contentHeight: 30
                                 PreferenceToggleRow {
@@ -554,7 +554,7 @@ Item {
                                 title: "Island placement"
                                 detail: Config.displays.islandPolicy === "all"
                                     ? "Each connected display keeps its own Island"
-                                    : "One persistent display owns Odyssey surfaces"
+                                    : "One persistent display owns Zenith surfaces"
                                 inlineLayout: true
                                 contentHeight: 36
                                 RowLayout {
@@ -837,7 +837,7 @@ Item {
                                 title: "Apply selections to"
                                 detail: Config.wallpaper.target === "all"
                                     ? "One selection updates every display"
-                                    : "Selections affect the display that opened Odyssey"
+                                    : "Selections affect the display that opened Zenith"
                                 inlineLayout: true
                                 contentHeight: 36
                                 RowLayout {
@@ -1148,7 +1148,7 @@ Item {
                             InfoStrip {
                                 Layout.fillWidth: true
                                 glyph: "󰆍"
-                                message: "History stays local and is never copied into an Odyssey database. Enter runs; Ctrl+C or Ctrl+Enter copies without execution."
+                                message: "History stays local and is never copied into an Zenith database. Enter runs; Ctrl+C or Ctrl+Enter copies without execution."
                             }
                         }
 
@@ -1184,7 +1184,7 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
-                                title: "Odyssey actions"
+                                title: "Zenith actions"
                                 detail: "Disabled actions remain available from the shell itself"
                                 contentHeight: ShortcutService.entries.length * 36
                                     + (ShortcutService.entries.length - 1)
@@ -1240,7 +1240,7 @@ Item {
                             InfoStrip {
                                 Layout.fillWidth: true
                                 glyph: "󰌌"
-                                message: "Enabling management writes only Odyssey bindings inside Odyssey's owned Hyprland integration. Turning it off removes those bindings and keeps the startup hook."
+                                message: "Enabling management writes only Zenith bindings inside Zenith's owned Hyprland integration. Turning it off removes those bindings and keeps the startup hook."
                             }
 
                             RowLayout {
@@ -1961,18 +1961,18 @@ Item {
 
                             IntegrationRow {
                                 Layout.fillWidth: true
-                                name: "Odyssey shell"
+                                name: "Zenith shell"
                                 detail: "Wallpaper-derived semantic colors"
                                 integrationEnabled: Config.appearance.wallpaperPaletteEnabled
                                 available: true
                                 managed: true
                                 onToggleRequested: enabled =>
-                                    AppearanceService.setOdysseyPaletteEnabled(enabled)
+                                    AppearanceService.setZenithPaletteEnabled(enabled)
                             }
                             IntegrationRow {
                                 Layout.fillWidth: true
                                 name: "Hyprlock"
-                                detail: "Odyssey palette, wallpaper, and lock layout"
+                                detail: "Zenith palette, wallpaper, and lock layout"
                                 integrationEnabled: Config.externalThemes.hyprlockEnabled
                                 available: !AppearanceService.changingIntegration
                                 managed: true
@@ -1998,7 +1998,7 @@ Item {
                                 Layout.fillWidth: true
                                 Layout.topMargin: Theme.space1
                                 glyph: "󰋼"
-                                message: "Manual means Odyssey leaves that target untouched. Managed targets use reversible ownership records and refuse conflicting external edits."
+                                message: "Manual means Zenith leaves that target untouched. Managed targets use reversible ownership records and refuse conflicting external edits."
                             }
                         }
                     }

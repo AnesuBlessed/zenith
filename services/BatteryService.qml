@@ -133,7 +133,7 @@ QtObject {
         if (previousOnBattery === onBattery)
             return
         previousOnBattery = onBattery
-        console.info("Odyssey power source:", onBattery
+        console.info("Zenith power source:", onBattery
             ? "battery" : "external power")
         if (Config.idle.powerSoundsEnabled) {
             Quickshell.execDetached([Quickshell.shellDir

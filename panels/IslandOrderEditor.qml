@@ -77,7 +77,7 @@ Item {
                         index < root.order.length ? root.order[index] : ""
                     Layout.fillWidth: true
                     Layout.preferredHeight: 62
-                    keys: ["odyssey-island-item"]
+                    keys: ["zenith-island-item"]
                     onDropped: drop => {
                         if (drop.source?.itemId)
                             root.place(drop.source.itemId, index)
@@ -170,7 +170,7 @@ Item {
         DropArea {
             Layout.fillWidth: true
             Layout.preferredHeight: 34
-            keys: ["odyssey-island-item"]
+            keys: ["zenith-island-item"]
             onDropped: drop => {
                 if (drop.source?.itemId)
                     root.remove(drop.source.itemId)
@@ -218,7 +218,7 @@ Item {
 
         Drag.active: tileDrag.drag.active
         Drag.source: tile
-        Drag.keys: ["odyssey-island-item"]
+        Drag.keys: ["zenith-island-item"]
         Drag.hotSpot.x: width / 2
         Drag.hotSpot.y: height / 2
 

@@ -15,7 +15,7 @@ QtObject {
     function setPersonalImage(source): bool {
         const value = source?.toString().trim() || ""
         if (!value.startsWith("file:")) {
-            console.warn("Odyssey rejected a non-local personal image")
+            console.warn("Zenith rejected a non-local personal image")
             return false
         }
 
@@ -31,7 +31,7 @@ QtObject {
             if (value.startsWith("file:"))
                 personalImageSource = value
         } catch (error) {
-            console.warn("Odyssey could not parse personal identity settings:",
+            console.warn("Zenith could not parse personal identity settings:",
                 error)
         }
         loaded = true
@@ -39,7 +39,7 @@ QtObject {
 
     property FileView identityFile: FileView {
         path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation)
-            + "/odyssey-identity.json"
+            + "/zenith-identity.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true
@@ -48,11 +48,11 @@ QtObject {
         onLoadFailed: error => {
             root.loaded = true
             if (error !== FileViewError.FileNotFound)
-                console.warn("Odyssey could not load personal identity settings:",
+                console.warn("Zenith could not load personal identity settings:",
                     FileViewError.toString(error))
         }
         onSaveFailed: error => console.warn(
-            "Odyssey could not save personal identity settings:",
+            "Zenith could not save personal identity settings:",
             FileViewError.toString(error))
     }
 }

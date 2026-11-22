@@ -90,9 +90,9 @@ PanelWindow {
         : 0
 
     // A separate namespace lets Hyprland blur Glass without changing the
-    // intentionally translucent parts of Odyssey's original Solid material.
+    // intentionally translucent parts of Zenith's original Solid material.
     WlrLayershell.namespace: window.glassLayer
-        ? "odyssey:island:glass" : "odyssey:island"
+        ? "zenith:island:glass" : "zenith:island"
     WlrLayershell.layer: WlrLayer.Top
     WlrLayershell.keyboardFocus: islandController.expandedActive
         ? WlrKeyboardFocus.OnDemand : WlrKeyboardFocus.None

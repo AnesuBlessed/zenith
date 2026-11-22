@@ -227,7 +227,7 @@ QtObject {
                 root.errorMessage = root.screenshotError || "Screenshot failed"
                 root.statusMessage = root.errorMessage
                 root.screenshotFinished(false, "", false)
-                console.warn("Odyssey CaptureService screenshot:", root.errorMessage)
+                console.warn("Zenith CaptureService screenshot:", root.errorMessage)
             }
         }
     }
@@ -250,7 +250,7 @@ QtObject {
             } else {
                 root.errorMessage = root.prepareError || "Could not start recording"
                 root.statusMessage = root.errorMessage
-                console.warn("Odyssey CaptureService preparation:", root.errorMessage)
+                console.warn("Zenith CaptureService preparation:", root.errorMessage)
             }
         }
     }
@@ -286,7 +286,7 @@ QtObject {
                 : (root.recorderError || "Recording backend exited unexpectedly")
             root.recordingFinished(success, root.lastOutputPath)
             if (!success)
-                console.warn("Odyssey CaptureService recording:", root.errorMessage)
+                console.warn("Zenith CaptureService recording:", root.errorMessage)
         }
     }
 

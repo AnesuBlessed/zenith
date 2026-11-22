@@ -95,7 +95,7 @@ QtObject {
 
     property FileView managedOperationFile: FileView {
         path: (Quickshell.env("XDG_RUNTIME_DIR") || "/tmp")
-            + "/odyssey/idle-brightness"
+            + "/zenith/idle-brightness"
         watchChanges: true
         printErrors: false
         onLoaded: root.loadManagedOperation(text())

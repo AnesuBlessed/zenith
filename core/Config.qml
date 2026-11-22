@@ -27,7 +27,7 @@ QtObject {
                 : Quickshell.env("HOME") + "/.local/state"
         }
         // Runtime palettes are mutable user state; this packaged file is fallback only.
-        readonly property string activePalettePath: stateRoot + "/odyssey/palette.json"
+        readonly property string activePalettePath: stateRoot + "/zenith/palette.json"
         readonly property string fallbackPalettePath: Qt.resolvedUrl("../generated/palette.json")
         readonly property real surfaceOpacity: SettingsStore.numberValue(
             "appearance", "surfaceOpacity", 0.96, 0.72, 1)

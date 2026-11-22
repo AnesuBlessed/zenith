@@ -346,7 +346,7 @@ Singleton {
                             && Object.keys(event).length === 4)
                         root.bindProvenance(event.notificationId, event.pid)
                 } catch (error) {
-                    console.warn("Odyssey notification provenance parse failed")
+                    console.warn("Zenith notification provenance parse failed")
                 }
             }
         }

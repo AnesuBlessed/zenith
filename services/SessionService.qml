@@ -137,7 +137,7 @@ QtObject {
                     || "The session action could not be completed"
                 root.statusMessage = root.actionError
                 root.actionFailed(completedAction, root.actionError)
-                console.warn("Odyssey SessionService:", completedAction,
+                console.warn("Zenith SessionService:", completedAction,
                     root.actionError)
             } else {
                 root.statusMessage = "Session controls ready"

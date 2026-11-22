@@ -117,7 +117,7 @@ QtObject {
             }
             available = true
         } catch (error) {
-            console.warn("Odyssey WeatherService cache:", error)
+            console.warn("Zenith WeatherService cache:", error)
         }
     }
 
@@ -222,7 +222,7 @@ QtObject {
             errorMessage = ""
             persistCache()
         } catch (error) {
-            console.warn("Odyssey WeatherService:", error)
+            console.warn("Zenith WeatherService:", error)
             errorMessage = "Forecast unavailable"
         }
         loading = false
@@ -300,7 +300,7 @@ QtObject {
 
     property FileView cacheFile: FileView {
         path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation)
-            + "/odyssey/weather.json"
+            + "/zenith/weather.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true

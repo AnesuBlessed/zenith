@@ -1,4 +1,4 @@
-module Odyssey.Island
+module Zenith.Island
 IslandHost 1.0 IslandHost.qml
 Island 1.0 Island.qml
 IslandController 1.0 IslandController.qml

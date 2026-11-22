@@ -604,14 +604,14 @@ QtObject {
         } catch (error) {
             values = ({})
             errorMessage = "Settings could not be read"
-            console.warn("Odyssey SettingsStore:", error)
+            console.warn("Zenith SettingsStore:", error)
         }
         loaded = true
     }
 
     property FileView settingsFile: FileView {
         path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation)
-            + "/odyssey/settings.json"
+            + "/zenith/settings.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true
@@ -623,13 +623,13 @@ QtObject {
             root.loaded = true
             if (error !== FileViewError.FileNotFound) {
                 root.errorMessage = "Settings could not be loaded"
-                console.warn("Odyssey SettingsStore:",
+                console.warn("Zenith SettingsStore:",
                     FileViewError.toString(error))
             }
         }
         onSaveFailed: error => {
             root.errorMessage = "Settings could not be saved"
-            console.warn("Odyssey SettingsStore:",
+            console.warn("Zenith SettingsStore:",
                 FileViewError.toString(error))
         }
     }

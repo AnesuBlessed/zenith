@@ -20,7 +20,7 @@ QtObject {
     readonly property string statusLabel: inhibited ? "Keep awake is active"
         : busy ? "Updating idle policy…"
         : errorMessage.length > 0 ? errorMessage
-        : installed ? "Odyssey manages idle timing"
+        : installed ? "Zenith manages idle timing"
         : "Hypridle is under manual control"
 
     signal inhibitionChanged(bool inhibited)
@@ -124,7 +124,7 @@ QtObject {
             if (exitCode !== 0) {
                 root.errorMessage = root.errorMessage
                     || "Idle policy update failed"
-                console.warn("Odyssey IdleService:", root.errorMessage)
+                console.warn("Zenith IdleService:", root.errorMessage)
                 return
             }
             root.errorMessage = ""

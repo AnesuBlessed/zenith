@@ -112,9 +112,9 @@ QtObject {
                 generated = fallback
                 generatedMode = fallback.mode === "light" ? "light" : "dark"
                 generatedAvailable = true
-                console.warn("Odyssey: active palette unavailable; using packaged fallback:", error)
+                console.warn("Zenith: active palette unavailable; using packaged fallback:", error)
             } catch (fallbackError) {
-                console.warn("Odyssey: palette fallback unavailable:", fallbackError)
+                console.warn("Zenith: palette fallback unavailable:", fallbackError)
             }
         }
     }

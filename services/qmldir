@@ -1,4 +1,4 @@
-module Odyssey.Services
+module Zenith.Services
 singleton AudioService 1.0 AudioService.qml
 singleton AppearanceService 1.0 AppearanceService.qml
 singleton BatteryService 1.0 BatteryService.qml

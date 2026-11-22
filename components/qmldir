@@ -1,4 +1,4 @@
-module Odyssey.Components
+module Zenith.Components
 EdgeAttachedSurface 1.0 EdgeAttachedSurface.qml
 CompactStatus 1.0 CompactStatus.qml
 ControlTile 1.0 ControlTile.qml
@@ -11,7 +11,7 @@ LevelTrack 1.0 LevelTrack.qml
 MediaArtwork 1.0 MediaArtwork.qml
 MediaBackdrop 1.0 MediaBackdrop.qml
 MediaTransport 1.0 MediaTransport.qml
-OdysseyMark 1.0 OdysseyMark.qml
+ZenithMark 1.0 ZenithMark.qml
 RecordingDot 1.0 RecordingDot.qml
 PersonalLogo 1.0 PersonalLogo.qml
 PowerProfileChooser 1.0 PowerProfileChooser.qml

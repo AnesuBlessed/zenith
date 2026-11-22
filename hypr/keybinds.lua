@@ -1,7 +1,7 @@
 -- =============================================================================
 --  ZENITH — KEYBINDINGS CONFIGURATION (LUA)
 -- =============================================================================
---  Strictly conflict-free, deduplicated keybindings derived from Minimal.
+--  Strictly conflict-free, deduplicated keybindings derived from Zenith.
 -- =============================================================================
 local mainMod = "SUPER"
 local paths   = require("paths")

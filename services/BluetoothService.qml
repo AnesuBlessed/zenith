@@ -575,7 +575,7 @@ QtObject {
             if (device?.connected)
                 device.disconnect()
             const output = root.pairProcessOutput.toLowerCase()
-            console.warn("Odyssey Bluetooth pairing failed:",
+            console.warn("Zenith Bluetooth pairing failed:",
                 root.pairProcessOutput || "No diagnostic output")
             if (output.includes("pairing successful"))
                 root.failOperation("BlueZ removed audio bond · Retry")

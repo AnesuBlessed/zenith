@@ -1,5 +1,5 @@
 /**
- *  MINIMAL — APPLICATION LAUNCHER (DUAL-PANE)
+ *  ZENITH — APPLICATION LAUNCHER (DUAL-PANE)
  *  Pixel-perfect aligned wallpaper banner + glass depth overlay.
  */
 
@@ -55,7 +55,7 @@ dummywall {
     orientation:                 horizontal;
     children:                    [ "mode-switcher" , "inputbar" ];
     background-color:            transparent;
-    background-image:            url("~/.cache/minimal/wall.thmb", height);
+    background-image:            url("~/.cache/zenith/wall.thmb", height);
     border-radius:               16px 0px 0px 16px;
 }
 
@@ -67,7 +67,7 @@ mode-switcher {
     padding:                     75px 8px;
     spacing:                     14px;
     background-color:            transparent;
-    background-image:            url("~/.cache/minimal/wall.blur", height);
+    background-image:            url("~/.cache/zenith/wall.blur", height);
     border-radius:               16px 0px 0px 16px;
 }
 

@@ -1,4 +1,4 @@
-module Odyssey.Panels
+module Zenith.Panels
 BatteryPage 1.0 BatteryPage.qml
 CalendarPage 1.0 CalendarPage.qml
 CapturePage 1.0 CapturePage.qml

@@ -1,4 +1,4 @@
-module Odyssey.Core
+module Zenith.Core
 singleton Animations 1.0 Animations.qml
 singleton Config 1.0 Config.qml
 singleton SettingsStore 1.0 SettingsStore.qml

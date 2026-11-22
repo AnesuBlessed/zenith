@@ -20,7 +20,7 @@ QtObject {
             : Quickshell.env("HOME") + "/.local/state"
     }
     readonly property string exportDirectory:
-        stateRoot + "/odyssey/theme-exports"
+        stateRoot + "/zenith/theme-exports"
     readonly property string helperPath:
         Quickshell.shellDir + "/scripts/export-theme.sh"
     readonly property string palettePath:
@@ -81,7 +81,7 @@ QtObject {
             } else {
                 root.errorMessage = root.errorMessage
                     || "Theme export failed"
-                console.warn("Odyssey ThemeExportService:", root.errorMessage)
+                console.warn("Zenith ThemeExportService:", root.errorMessage)
             }
             if (root.refreshPending) {
                 root.refreshPending = false

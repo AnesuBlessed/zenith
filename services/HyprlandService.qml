@@ -212,7 +212,7 @@ QtObject {
         const id = Number(workspaceId)
         if (!Number.isInteger(id) || id < 1
                 || id > Config.hyprland.workspaceCount) {
-            console.warn("Odyssey refused invalid workspace id:", workspaceId)
+            console.warn("Zenith refused invalid workspace id:", workspaceId)
             return false
         }
 

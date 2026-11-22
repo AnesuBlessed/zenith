@@ -52,7 +52,7 @@ QtObject {
         || directRenderProcess.running
     readonly property string statusLabel: errorMessage
         || (backendState !== "ready" ? backendDetail
-        : candidateReady ? "Candidate palette prepared — Apply to change Odyssey"
+        : candidateReady ? "Candidate palette prepared — Apply to change Zenith"
         : currentWallpaper ? currentName : "No wallpaper selected")
 
     signal wallpaperApplied(string path, bool paletteUpdated)
@@ -123,8 +123,8 @@ QtObject {
             return
         backendState = manual ? "recovering" : "starting"
         backendAvailable = false
-        backendDetail = manual ? "Retrying Odyssey's awww renderer…"
-            : "Starting Odyssey's awww renderer…"
+        backendDetail = manual ? "Retrying Zenith's awww renderer…"
+            : "Starting Zenith's awww renderer…"
         errorMessage = ""
         beginOperation("bootstrap", [helperPath, "bootstrap",
             manual ? "manual" : "auto"])
@@ -320,9 +320,9 @@ QtObject {
             if (backendState === "ready")
                 backendDetail = "awww renderer ready"
             else if (backendState === "recovering")
-                backendDetail = "Recovering Odyssey's awww renderer…"
+                backendDetail = "Recovering Zenith's awww renderer…"
             else if (backendState === "missing")
-                backendDetail = "awww is required for Odyssey wallpapers (sudo pacman -S awww)"
+                backendDetail = "awww is required for Zenith wallpapers (sudo pacman -S awww)"
             else if (backendState === "conflict")
                 backendDetail = "Another wallpaper renderer is active; stop or reconfigure it first"
             else if (backendState === "exhausted")

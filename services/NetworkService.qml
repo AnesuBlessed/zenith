@@ -528,7 +528,7 @@ QtObject {
         }
     }
     property Process restartManagedShell: Process {
-        command: ["systemctl", "--user", "restart", "odyssey.service"]
+        command: ["systemctl", "--user", "restart", "zenith.service"]
     }
 
     property Process runtimeQuery: Process {

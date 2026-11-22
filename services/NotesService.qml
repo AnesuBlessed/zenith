@@ -191,7 +191,7 @@ QtObject {
                     root.errorMessage = ""
                 } catch (error) {
                     root.errorMessage = "Notes could not be read"
-                    console.warn("Odyssey NotesService:", error)
+                    console.warn("Zenith NotesService:", error)
                 }
             } else {
                 root.errorMessage = root.stderrBuffer || "Notes operation failed"
@@ -199,7 +199,7 @@ QtObject {
                     root.saveState = ""
                 if (task?.kind === "list")
                     root.loaded = true
-                console.warn("Odyssey NotesService:", root.errorMessage)
+                console.warn("Zenith NotesService:", root.errorMessage)
             }
             root.activeTask = null
             Qt.callLater(root.runNext)

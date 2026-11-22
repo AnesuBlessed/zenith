@@ -128,10 +128,10 @@ QtObject {
         statusMessage = "Island and motion defaults restored"
     }
 
-    function setOdysseyPaletteEnabled(enabled: bool): void {
+    function setZenithPaletteEnabled(enabled: bool): void {
         SettingsStore.setWallpaperPaletteEnabled(enabled)
-        statusMessage = enabled ? "Odyssey follows the wallpaper palette"
-            : "Odyssey uses its built-in semantic palette"
+        statusMessage = enabled ? "Zenith follows the wallpaper palette"
+            : "Zenith uses its built-in semantic palette"
         ThemeExportService.refresh()
     }
 
@@ -248,7 +248,7 @@ QtObject {
             if (root.pendingIntegration === "terminal") {
                 if (exitCode === 0) {
                     root.statusMessage = root.pendingIntegrationEnabled
-                        ? "Available terminal tools follow Odyssey"
+                        ? "Available terminal tools follow Zenith"
                         : "Terminal tools are under manual control"
                     root.errorMessage = ""
                     ThemeExportService.refresh()
@@ -266,7 +266,7 @@ QtObject {
                     root.pendingIntegrationEnabled)
                 ThemeExportService.refresh()
                 root.statusMessage = root.pendingIntegrationEnabled
-                    ? "Hyprlock follows Odyssey" : "Hyprlock is under manual control"
+                    ? "Hyprlock follows Zenith" : "Hyprlock is under manual control"
                 root.errorMessage = ""
             } else {
                 root.statusMessage = ""

@@ -1,5 +1,5 @@
 /**
- *  MINIMAL — SELECTOR MENU THEME (WALLPAPERS, LAYOUTS, POWER)
+ *  ZENITH — SELECTOR MENU THEME (WALLPAPERS, LAYOUTS, POWER)
  *  Obsidian glass scrim, wallpaper banner frame, dynamic theme tokens.
  */
 
@@ -40,7 +40,7 @@ wallbox {
     expand:                      false;
     orientation:                 horizontal;
     background-color:            transparent;
-    background-image:            url("~/.cache/minimal/wall.blur", width);
+    background-image:            url("~/.cache/zenith/wall.blur", width);
     border-radius:               12px;
     children:                    [ "wallframe" , "inputbar" ];
 }
@@ -51,7 +51,7 @@ wallframe {
     padding:                     0px;
     expand:                      false;
     background-color:            transparent;
-    background-image:            url("~/.cache/minimal/wall.quad", width);
+    background-image:            url("~/.cache/zenith/wall.quad", width);
     border-radius:               12px 0px 0px 12px;
 }
 

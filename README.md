@@ -1,7 +1,7 @@
 # 🌌 Project Zenith
 
 > **The Zero-Bloat, Event-Driven, Hardware-Aware Hyprland Desktop Environment**  
-> Powered by Quickshell Dynamic Island, Minimal Dual-Pane Rofi, Native C/Rust Geometry Engine, and the Cinematic Wallpaper Shower.
+> Powered by Quickshell Dynamic Island, Dual-Pane Rofi, Native C/Rust Geometry Engine, and the Cinematic Wallpaper Shower.
 
 ---
 

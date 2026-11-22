@@ -21,13 +21,13 @@ QtObject {
     readonly property string configPath: ""
     readonly property string statusLabel: busy ? "Updating Hyprland…"
         : errorMessage.length > 0 ? errorMessage
-        : installed ? "Odyssey manages these shell shortcuts"
+        : installed ? "Zenith manages these shell shortcuts"
         : "Hyprland retains manual control"
     readonly property var entries: [
         { id: "launcher", label: "Application launcher", keys: "Super + A" },
         { id: "commandLauncher", label: "Command launcher", keys: "Super + Ctrl + A" },
         { id: "clipboard", label: "Clipboard history", keys: "Super + V" },
-        { id: "settings", label: "Odyssey settings", keys: "Super + ," },
+        { id: "settings", label: "Zenith settings", keys: "Super + ," },
         { id: "notifications", label: "Notifications", keys: "Super + N" },
         { id: "wallpaper", label: "Wallpaper library", keys: "Super + Y" },
         { id: "controlCenter", label: "Control Center", keys: "Super + Space" },
@@ -122,7 +122,7 @@ QtObject {
                 root.errorMessage = root.errorMessage
                     || "Shortcut update failed"
                 root.pendingAction = ""
-                console.warn("Odyssey ShortcutService:", root.errorMessage)
+                console.warn("Zenith ShortcutService:", root.errorMessage)
                 return
             }
             root.errorMessage = ""

@@ -1,7 +1,7 @@
 pragma Singleton
 import QtQuick
 
-// Shared material tokens for every top-level Odyssey surface. Glass is kept
+// Shared material tokens for every top-level Zenith surface. Glass is kept
 // compositor-first: QML supplies tint, luminosity and edge depth while
 // Hyprland supplies the backdrop blur for the dedicated layer namespace.
 QtObject {
