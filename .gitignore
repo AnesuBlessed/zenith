@@ -1,0 +1,12 @@
+# Build outputs & cache
+build/
+target/
+*.tmp*
+.cache/
+.local/
+*.log
+
+# Editor files
+.vscode/
+.idea/
+*.swp
