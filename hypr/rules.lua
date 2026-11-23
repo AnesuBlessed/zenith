@@ -78,7 +78,7 @@ hl.layer_rule({
 hl.layer_rule({
     name  = "quickshell_island",
     match = {
-        namespace = "^(quickshell)$",
+        namespace = "^(quickshell|zenith:island|zenith:island:glass)$",
     },
     blur         = true,
     ignore_alpha = 0.5,

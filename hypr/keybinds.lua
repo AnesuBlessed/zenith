@@ -67,8 +67,8 @@ hl.bind(mainMod .. " + mouse_up",   hl.dsp.focus({ workspace = "e-1" }))
 -- =====================================================
 -- 2. Applications & Shell Controls
 -- =====================================================
--- Terminal (Sub-millisecond Footclient)
-hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("footclient || foot"))
+-- Terminal (Foot)
+hl.bind(mainMod .. " + T", hl.dsp.exec_cmd("foot"))
 
 -- App Launcher (0ms Dual-Pane Rofi via C zenith-ctl)
 hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(zenith_ctl .. " toggle launcher"))

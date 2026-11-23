@@ -54,7 +54,22 @@ static const char *get_zenith_root(void) {
 
     const char *home = getenv("HOME");
     if (home) {
-        snprintf(root, sizeof(root), "%s/.config/zenith", home);
+        char root_file[PATH_MAX];
+        snprintf(root_file, sizeof(root_file), "%s/.config/zenith/root", home);
+        FILE *rf = fopen(root_file, "r");
+        if (rf) {
+            if (fgets(root, sizeof(root), rf)) {
+                size_t l = strlen(root);
+                while (l > 0 && (root[l - 1] == '\n' || root[l - 1] == '\r' || root[l - 1] == ' ')) {
+                    root[--l] = '\0';
+                }
+                fclose(rf);
+                if (root[0]) return root;
+            } else {
+                fclose(rf);
+            }
+        }
+        snprintf(root, sizeof(root), "%s/zenith", home);
     } else {
         strcpy(root, "/etc/zenith");
     }

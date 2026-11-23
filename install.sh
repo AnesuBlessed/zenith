@@ -227,6 +227,7 @@ chmod +x "$ROOT_DIR/scripts/lock-status.sh"
 chmod +x "$ROOT_DIR/scripts/clipboardctl.sh"
 chmod +x "$ROOT_DIR/scripts/notesctl.sh"
 chmod +x "$ROOT_DIR/scripts/notification-provenance.sh"
+chmod +x "$ROOT_DIR/scripts/wallpaperctl.sh"
 
 # hypridle + hyprlock configs
 ln -sf "$ROOT_DIR/hypr/hyprlock.conf"  "$HOME/.config/hypr/hyprlock.conf"
@@ -248,6 +249,11 @@ fi
 # Deploy Fastfetch & Minimal Arrow Prompt
 mkdir -p "$CONFIG_HOME/zenith/fastfetch"
 cp -rf "$ROOT_DIR/fastfetch/"* "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
+
+# Pre-populate theme override so rofi parses cleanly on first launch
+CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
+mkdir -p "$CACHE_HOME/zenith"
+touch "$CACHE_HOME/zenith/theme-override.rasi"
 
 if [[ -f "$HOME/.bashrc" ]] && ! grep -q "zenith/scripts/prompt.sh" "$HOME/.bashrc"; then
     printf '\n# Project Zenith Minimal Arrow Prompt\n[ -f "%s/scripts/prompt.sh" ] && source "%s/scripts/prompt.sh"\n' "$ROOT_DIR" "$ROOT_DIR" >> "$HOME/.bashrc"
