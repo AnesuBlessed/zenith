@@ -17,8 +17,5 @@ hl.exec_once(paths.bin("zenith-native") .. " align")
 hl.exec_once("wl-paste --type text --watch cliphist store")
 hl.exec_once("wl-paste --type image --watch cliphist store")
 
--- 5. Notification Center
-hl.exec_once("mako")
-
--- 6. Polkit Authentication Agent
+-- 5. Polkit Authentication Agent
 hl.exec_once("/usr/lib/polkit-kde-authentication-agent-1 || /usr/lib/hyprpolkitagent")

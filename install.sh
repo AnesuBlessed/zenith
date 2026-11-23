@@ -92,14 +92,15 @@ PACMAN_PACKAGES=(
     # Default Applications
     foot firefox thunar
 
-    # Phone Cable Sharing & Mobile Integration Stack (Android MTP + Apple iOS AFC)
-    gvfs gvfs-mtp gvfs-gphoto2 gvfs-afc
-    usbmuxd libimobiledevice android-udev
+    # Phone Cable Sharing & Mobile Integration Stack
+    # Core Android MTP stack
+    gvfs gvfs-mtp gvfs-gphoto2 android-udev
     thunar-volman tumbler thunar-archive-plugin
 
     # Shell, Menus & Clipboard
     rofi-wayland cliphist wl-clipboard
-    grim slurp swappy jq libnotify
+    grim slurp swappy jq libnotify fastfetch
+    hyprpolkitagent
 
     # Audio & Hardware
     pipewire pipewire-pulse wireplumber playerctl
@@ -107,7 +108,7 @@ PACMAN_PACKAGES=(
 
     # C / Rust Build Toolchain & Libraries
     base-devel rust cargo gcc make pkg-config
-    gtk4 cairo glib2 json-c
+    gtk4 cairo glib2 json-c imagemagick
 
     # Fonts
     ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji
@@ -123,6 +124,11 @@ AUR_PACKAGES=(
 log_info "Installing official repository packages..."
 sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
 
+# Optional Apple iOS stack (non-fatal if pacman encounters issues or user is pure Android)
+OPTIONAL_IOS_PACKAGES=(gvfs-afc usbmuxd libimobiledevice)
+log_info "Attempting to install optional iOS sharing stack (will skip safely if unavailable)..."
+sudo pacman -S --needed --noconfirm "${OPTIONAL_IOS_PACKAGES[@]}" 2>/dev/null || log_warn "iOS sharing packages skipped or unavailable (Android MTP remains fully operational)."
+
 log_info "Installing AUR packages..."
 "$AUR_HELPER" -S --needed --noconfirm "${AUR_PACKAGES[@]}"
 
@@ -131,9 +137,11 @@ log_info "Configuring system services and socket activation..."
 sudo systemctl enable --now NetworkManager.service
 sudo systemctl enable --now bluetooth.service
 
-# Socket-activate usbmuxd (zero RAM when no iPhone is plugged in)
-sudo systemctl enable usbmuxd.socket
-sudo systemctl start usbmuxd.socket || true
+# Socket-activate usbmuxd if installed (zero RAM when no iPhone is plugged in)
+if systemctl list-unit-files usbmuxd.socket >/dev/null 2>&1; then
+    sudo systemctl enable usbmuxd.socket 2>/dev/null || true
+    sudo systemctl start usbmuxd.socket 2>/dev/null || true
+fi
 
 log_ok "Services configured."
 
@@ -183,6 +191,22 @@ fi
 cp -rf "$ROOT_DIR/hypr/"* "$CONFIG_HOME/hypr/"
 log_ok "Hyprland Lua modules deployed to $CONFIG_HOME/hypr/"
 
+# Lock screen scripts — make executable
+chmod +x "$ROOT_DIR/scripts/lock.sh"
+chmod +x "$ROOT_DIR/scripts/lock-power.sh"
+chmod +x "$ROOT_DIR/scripts/lock-status.sh"
+
+# hypridle + hyprlock configs
+ln -sf "$ROOT_DIR/hypr/hyprlock.conf"  "$HOME/.config/hypr/hyprlock.conf"
+ln -sf "$ROOT_DIR/hypr/hypridle.conf"  "$HOME/.config/hypr/hypridle.conf"
+
+# Avatar placeholder (user replaces with their own)
+AVATAR_DIR="$HOME/.config/zenith/assets"
+mkdir -p "$AVATAR_DIR"
+[ -f "$AVATAR_DIR/avatar.png" ] || cp "$ROOT_DIR/assets/avatar.png" "$AVATAR_DIR/avatar.png" 2>/dev/null || \
+  magick -size 84x84 xc:'#59b9e8' -fill white -font JetBrainsMono-NF -pointsize 36 \
+  -gravity center -annotate 0 'Z' "$AVATAR_DIR/avatar.png" 2>/dev/null || true
+
 # Foot configuration
 mkdir -p "$CONFIG_HOME/foot"
 if [[ -f "$ROOT_DIR/foot/foot.ini" ]]; then
@@ -197,6 +221,39 @@ if [[ -f "$HOME/.bashrc" ]] && ! grep -q "zenith/scripts/prompt.sh" "$HOME/.bash
     printf '\n# Project Zenith Minimal Arrow Prompt\n[ -f "%s/scripts/prompt.sh" ] && source "%s/scripts/prompt.sh"\n' "$ROOT_DIR" "$ROOT_DIR" >> "$HOME/.bashrc"
 fi
 
+# 7. Hyprland Auto-Start Configuration (Auto-launch from TTY1)
+log_info "Configuring automatic Hyprland startup from TTY..."
+
+TTY_HYPRLAND_SNIPPET='
+# Auto-start Hyprland on TTY1 login if not already in graphical session
+if [ -z "$DISPLAY" ] && [ "$XDG_VTNR" = 1 ] && [ -z "$WAYLAND_DISPLAY" ]; then
+    exec Hyprland
+fi'
+
+# Configure user profile scripts (~/.bash_profile or ~/.profile or ~/.zprofile)
+TARGET_PROFILE=""
+if [[ -f "$HOME/.bash_profile" ]]; then
+    TARGET_PROFILE="$HOME/.bash_profile"
+elif [[ -f "$HOME/.zprofile" ]]; then
+    TARGET_PROFILE="$HOME/.zprofile"
+elif [[ -f "$HOME/.profile" ]]; then
+    TARGET_PROFILE="$HOME/.profile"
+else
+    TARGET_PROFILE="$HOME/.bash_profile"
+    touch "$TARGET_PROFILE"
+fi
+
+if ! grep -q "exec Hyprland" "$TARGET_PROFILE" 2>/dev/null; then
+    printf "\n%s\n" "$TTY_HYPRLAND_SNIPPET" >> "$TARGET_PROFILE"
+    log_ok "Configured Hyprland auto-start in $TARGET_PROFILE"
+fi
+
+# If using ~/.bashrc in login shell environments, ensure profile is sourced or checked
+if [[ -f "$HOME/.bashrc" ]] && ! grep -q "exec Hyprland" "$HOME/.bashrc"; then
+    # Add non-intrusive TTY1 autostart check
+    printf "\n# Auto-start Hyprland on TTY1 login\nif [[ -z \"\$DISPLAY\" ]] && [[ \"\$(tty 2>/dev/null)\" == \"/dev/tty1\" ]] && [[ -z \"\$WAYLAND_DISPLAY\" ]]; then\n    exec Hyprland\nfi\n" >> "$HOME/.bashrc"
+fi
+
 # Enable Foot server user service for sub-millisecond terminal launches
 systemctl --user enable --now foot-server.service 2>/dev/null || true
 
@@ -207,9 +264,17 @@ cat << "EOF"
   ======================================================
 EOF
 printf "%b\n" "$reset"
-printf "  • Launch with: %bHyprland%b\n" "$bold$blue" "$reset"
+printf "  • Launch with: %bHyprland%b (or login on TTY1 to auto-launch)\n" "$bold$blue" "$reset"
 printf "  • App Launcher: %bSUPER + A%b (0ms instant pop-in)\n" "$bold$green" "$reset"
 printf "  • Clipboard:    %bSUPER + C%b (Anchored top-right)\n" "$bold$green" "$reset"
 printf "  • Wallpaper:    %bSUPER + W%b (Cinematic Wallpaper Shower)\n" "$bold$green" "$reset"
 printf "  • Codium:       %bSUPER + O%b\n" "$bold$green" "$reset"
-printf "  • Phone Sharing:%bPlug in Android (MTP) or iPhone (AFC) to Thunar%b\n\n" "$bold$yellow" "$reset"
+printf "  • Phone Sharing:%bPlug in Android (MTP) to Thunar%b\n\n" "$bold$yellow" "$reset"
+
+# Ask or automatically transition to Hyprland if currently in a TTY session
+if [[ -z "${WAYLAND_DISPLAY:-}" && -z "${DISPLAY:-}" ]]; then
+    printf "%bZenith installation finished!%b Launching Hyprland now...\n" "$bold$green" "$reset"
+    read -r -t 5 -p "Starting Hyprland in 5 seconds (Press Enter to start immediately, or Ctrl+C to stay in shell)... " || true
+    echo ""
+    exec Hyprland
+fi

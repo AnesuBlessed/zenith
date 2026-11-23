@@ -74,21 +74,11 @@ hl.layer_rule({
     ignore_alpha = 0.5,
 })
 
--- Quickshell Dynamic Island: Frosted Glass
+-- Quickshell Dynamic Island & Overlays: Frosted Glass
 hl.layer_rule({
     name  = "quickshell_island",
     match = {
         namespace = "^(quickshell)$",
-    },
-    blur         = true,
-    ignore_alpha = 0.5,
-})
-
--- Mako / Notifications
-hl.layer_rule({
-    name  = "notifications",
-    match = {
-        namespace = "^(notifications|mako)$",
     },
     blur         = true,
     ignore_alpha = 0.5,
