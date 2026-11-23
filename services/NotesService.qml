@@ -18,7 +18,7 @@ QtObject {
     property string pendingContent: ""
 
     readonly property string helperPath:
-        Quickshell.shellDir + "/scripts/notesctl.py"
+        Quickshell.shellDir + "/scripts/notesctl.sh"
 
     signal noteCreated(string noteId)
     signal noteDeleted(string noteId)

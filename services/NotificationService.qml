@@ -24,7 +24,7 @@ Singleton {
     property var pendingTransientDismiss: null
     property bool provenanceRestartPending: false
     readonly property string provenanceHelperPath:
-        Quickshell.shellDir + "/scripts/notification-provenance.py"
+        Quickshell.shellDir + "/scripts/notification-provenance.sh"
 
     readonly property int count: history.length
     readonly property bool hasCurrent: current !== null
@@ -305,7 +305,7 @@ Singleton {
         if (!serverEnabled || provenanceProcess.running)
             return
         provenanceRestartPending = false
-        provenanceProcess.command = ["python3", provenanceHelperPath]
+        provenanceProcess.command = ["bash", provenanceHelperPath]
         provenanceProcess.running = true
     }
 

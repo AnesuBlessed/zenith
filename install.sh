@@ -115,6 +115,9 @@ PACMAN_PACKAGES=(
 
     # Display Manager (login screen on boot)
     sddm
+
+    # Logout screen & OCR
+    wlogout tesseract tesseract-data-eng
 )
 
 AUR_PACKAGES=(
@@ -122,6 +125,8 @@ AUR_PACKAGES=(
     quickshell
     # VSCodium
     vscodium-bin
+    # Icon theme used by rofi app launcher
+    tela-circle-icon-theme-dracula
 )
 
 log_info "Installing official repository packages..."
@@ -219,6 +224,9 @@ log_ok "Hyprland Lua modules deployed to $CONFIG_HOME/hypr/"
 chmod +x "$ROOT_DIR/scripts/lock.sh"
 chmod +x "$ROOT_DIR/scripts/lock-power.sh"
 chmod +x "$ROOT_DIR/scripts/lock-status.sh"
+chmod +x "$ROOT_DIR/scripts/clipboardctl.sh"
+chmod +x "$ROOT_DIR/scripts/notesctl.sh"
+chmod +x "$ROOT_DIR/scripts/notification-provenance.sh"
 
 # hypridle + hyprlock configs
 ln -sf "$ROOT_DIR/hypr/hyprlock.conf"  "$HOME/.config/hypr/hyprlock.conf"
