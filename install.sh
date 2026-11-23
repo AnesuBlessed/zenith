@@ -112,6 +112,9 @@ PACMAN_PACKAGES=(
 
     # Fonts
     ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji
+
+    # Display Manager (login screen on boot)
+    sddm
 )
 
 AUR_PACKAGES=(
@@ -144,6 +147,22 @@ if systemctl list-unit-files usbmuxd.socket >/dev/null 2>&1; then
 fi
 
 log_ok "Services configured."
+
+# Enable SDDM display manager (gives login screen on every boot)
+log_info "Enabling SDDM display manager..."
+sudo systemctl enable sddm.service
+# Register Hyprland as a Wayland session for SDDM if not already present
+if [[ ! -f /usr/share/wayland-sessions/hyprland.desktop ]]; then
+    sudo mkdir -p /usr/share/wayland-sessions
+    sudo tee /usr/share/wayland-sessions/hyprland.desktop > /dev/null << 'DESKTOP'
+[Desktop Entry]
+Name=Hyprland
+Comment=Hyprland Wayland Compositor
+Exec=start-hyprland
+Type=Application
+DESKTOP
+fi
+log_ok "SDDM enabled — system will show a login screen after every reboot."
 
 # 5. Build Native C & Rust Subsystems
 log_info "Building Zenith native C & Rust components..."
@@ -186,6 +205,11 @@ if [[ -f "$CONFIG_HOME/hypr/hyprland.conf" || -f "$CONFIG_HOME/hypr/hyprland.lua
     mv "$CONFIG_HOME/hypr" "$CONFIG_HOME/hypr.backup.$backup_date"
     mkdir -p "$CONFIG_HOME/hypr"
 fi
+
+# Write ZENITH_ROOT so paths.lua always resolves the correct repo root
+mkdir -p "$CONFIG_HOME/zenith"
+printf '%s\n' "$ROOT_DIR" > "$CONFIG_HOME/zenith/root"
+log_ok "ZENITH_ROOT written to $CONFIG_HOME/zenith/root -> $ROOT_DIR"
 
 # Symlink or Copy Hyprland Lua modules
 cp -rf "$ROOT_DIR/hypr/"* "$CONFIG_HOME/hypr/"

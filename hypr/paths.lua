@@ -14,12 +14,21 @@ local function env(name, fallback)
 end
 
 local home = env("HOME", "")
-local file = debug.getinfo(1, "S").source:sub(2)
 
-local p = io.popen("readlink -f -- " .. M.quote(file))
-local resolved = p and p:read("*l")
-if p then p:close() end
-M.root = resolved and resolved:match("^(.*)/hypr/[^/]+$") or (home .. "/.config/zenith")
+-- Primary: read the root path written by install.sh (always correct)
+local root_file = home .. "/.config/zenith/root"
+local rf = io.open(root_file, "r")
+if rf then
+    M.root = rf:read("*l"):gsub("%s+$", "")
+    rf:close()
+else
+    -- Fallback: derive from this file's resolved path
+    local file = debug.getinfo(1, "S").source:sub(2)
+    local p = io.popen("readlink -f -- " .. M.quote(file))
+    local resolved = p and p:read("*l")
+    if p then p:close() end
+    M.root = resolved and resolved:match("^(.*)/hypr/[^/]+$") or (home .. "/zenith")
+end
 
 M.cache   = env("XDG_CACHE_HOME", home .. "/.cache") .. "/zenith"
 M.state   = env("XDG_STATE_HOME", home .. "/.local/state") .. "/zenith"
