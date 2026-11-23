@@ -224,10 +224,20 @@ fi
 # 7. Hyprland Auto-Start Configuration (Auto-launch from TTY1)
 log_info "Configuring automatic Hyprland startup from TTY..."
 
+# Determine optimal launcher binary (start-hyprland wrapper initializes environment & systemd)
+LAUNCH_CMD="Hyprland"
+if command -v start-hyprland >/dev/null 2>&1; then
+    LAUNCH_CMD="start-hyprland"
+fi
+
 TTY_HYPRLAND_SNIPPET='
 # Auto-start Hyprland on TTY1 login if not already in graphical session
 if [ -z "$DISPLAY" ] && [ "$XDG_VTNR" = 1 ] && [ -z "$WAYLAND_DISPLAY" ]; then
-    exec Hyprland
+    if command -v start-hyprland >/dev/null 2>&1; then
+        exec start-hyprland
+    else
+        exec Hyprland
+    fi
 fi'
 
 # Configure user profile scripts (~/.bash_profile or ~/.profile or ~/.zprofile)
@@ -243,15 +253,15 @@ else
     touch "$TARGET_PROFILE"
 fi
 
-if ! grep -q "exec Hyprland" "$TARGET_PROFILE" 2>/dev/null; then
+if ! grep -q "start-hyprland" "$TARGET_PROFILE" 2>/dev/null && ! grep -q "exec Hyprland" "$TARGET_PROFILE" 2>/dev/null; then
     printf "\n%s\n" "$TTY_HYPRLAND_SNIPPET" >> "$TARGET_PROFILE"
     log_ok "Configured Hyprland auto-start in $TARGET_PROFILE"
 fi
 
 # If using ~/.bashrc in login shell environments, ensure profile is sourced or checked
-if [[ -f "$HOME/.bashrc" ]] && ! grep -q "exec Hyprland" "$HOME/.bashrc"; then
+if [[ -f "$HOME/.bashrc" ]] && ! grep -q "start-hyprland" "$HOME/.bashrc" && ! grep -q "exec Hyprland" "$HOME/.bashrc"; then
     # Add non-intrusive TTY1 autostart check
-    printf "\n# Auto-start Hyprland on TTY1 login\nif [[ -z \"\$DISPLAY\" ]] && [[ \"\$(tty 2>/dev/null)\" == \"/dev/tty1\" ]] && [[ -z \"\$WAYLAND_DISPLAY\" ]]; then\n    exec Hyprland\nfi\n" >> "$HOME/.bashrc"
+    printf "\n# Auto-start Hyprland on TTY1 login\nif [[ -z \"\$DISPLAY\" ]] && [[ \"\$(tty 2>/dev/null)\" == \"/dev/tty1\" ]] && [[ -z \"\$WAYLAND_DISPLAY\" ]]; then\n    if command -v start-hyprland >/dev/null 2>&1; then\n        exec start-hyprland\n    else\n        exec Hyprland\n    fi\nfi\n" >> "$HOME/.bashrc"
 fi
 
 # Enable Foot server user service for sub-millisecond terminal launches
@@ -264,7 +274,7 @@ cat << "EOF"
   ======================================================
 EOF
 printf "%b\n" "$reset"
-printf "  • Launch with: %bHyprland%b (or login on TTY1 to auto-launch)\n" "$bold$blue" "$reset"
+printf "  • Launch with: %b%s%b (or login on TTY1 to auto-launch)\n" "$bold$blue" "$LAUNCH_CMD" "$reset"
 printf "  • App Launcher: %bSUPER + A%b (0ms instant pop-in)\n" "$bold$green" "$reset"
 printf "  • Clipboard:    %bSUPER + C%b (Anchored top-right)\n" "$bold$green" "$reset"
 printf "  • Wallpaper:    %bSUPER + W%b (Cinematic Wallpaper Shower)\n" "$bold$green" "$reset"
@@ -274,7 +284,11 @@ printf "  • Phone Sharing:%bPlug in Android (MTP) to Thunar%b\n\n" "$bold$yell
 # Ask or automatically transition to Hyprland if currently in a TTY session
 if [[ -z "${WAYLAND_DISPLAY:-}" && -z "${DISPLAY:-}" ]]; then
     printf "%bZenith installation finished!%b Launching Hyprland now...\n" "$bold$green" "$reset"
-    read -r -t 5 -p "Starting Hyprland in 5 seconds (Press Enter to start immediately, or Ctrl+C to stay in shell)... " || true
+    read -r -t 5 -p "Starting in 5 seconds (Press Enter to start immediately, or Ctrl+C to stay in shell)... " || true
     echo ""
-    exec Hyprland
+    if command -v start-hyprland >/dev/null 2>&1; then
+        exec start-hyprland
+    else
+        exec Hyprland
+    fi
 fi

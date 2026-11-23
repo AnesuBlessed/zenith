@@ -35,13 +35,10 @@ hl.config({
             drag_lock      = false,
         },
     },
-
-    gestures = {
-        workspace_swipe = true,
-        workspace_swipe_fingers = 3,
-        workspace_swipe_distance = 250,
-    },
 })
+
+-- Touchpad 3-finger swipe gesture for workspace switching (Hyprland modern syntax)
+hl.gesture({ fingers = 3, direction = "horizontal", action = "workspace" })
 
 return {
     vfr  = true,
