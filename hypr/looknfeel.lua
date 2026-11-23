@@ -62,7 +62,6 @@ hl.config({
 
     render = {
         direct_scanout = 1, -- 0ms bypass for fullscreen video and games
-        explicit_sync  = 2, -- DRM syncobj zero frame-drop synchronization
     },
 
     cursor = {
