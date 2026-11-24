@@ -247,23 +247,56 @@ cp -rf "$ROOT_DIR/fastfetch/"* "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || t
 # Pre-populate theme override and state so rofi & quickshell parse cleanly on first launch
 CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-mkdir -p "$CACHE_HOME/zenith" "$STATE_HOME/zenith"
+mkdir -p "$CACHE_HOME/zenith" "$STATE_HOME/zenith" "$CONFIG_HOME/foot"
 touch "$CACHE_HOME/zenith/theme-override.rasi"
-touch "$CACHE_HOME/zenith/wall.blur"
-touch "$CACHE_HOME/zenith/wall.quad"
 
-# Default fallback palette if none generated yet
-if [[ ! -f "$STATE_HOME/zenith/palette.json" ]]; then
-    cat << 'EOF' > "$STATE_HOME/zenith/palette.json"
+# Copy default foot colors into place
+if [[ -f "$ROOT_DIR/foot/colors.ini" && ! -f "$CONFIG_HOME/foot/colors.ini" ]]; then
+    cp -f "$ROOT_DIR/foot/colors.ini" "$CONFIG_HOME/foot/colors.ini"
+fi
+
+# Deploy default palette
+if [[ -f "$ROOT_DIR/generated/palette.json" ]]; then
+    cp -f "$ROOT_DIR/generated/palette.json" "$STATE_HOME/zenith/palette.json"
+fi
+
+# Ensure default settings are seeded on first install so Island is never dormant/hidden by default
+if [[ ! -f "$STATE_HOME/zenith/settings.json" ]]; then
+    cat << 'EOF' > "$STATE_HOME/zenith/settings.json"
 {
-  "bg": "#1e1e2e",
-  "fg": "#cdd6f4",
-  "accent": "#89b4fa",
-  "surface": "#313244",
-  "border": "#45475a",
-  "selection": "#585b70"
+  "appearance": {
+    "mode": "dark",
+    "material": "solid",
+    "surfaceOpacity": 0.96,
+    "islandStyle": "floating",
+    "wallpaperPaletteEnabled": true
+  },
+  "island": {
+    "topMargin": 5,
+    "reservedSpace": 30,
+    "dormantWidth": 214,
+    "autoHide": false,
+    "showRevealLip": true,
+    "borderEnabled": true
+  },
+  "displays": {
+    "islandPolicy": "all",
+    "primaryMonitor": "auto"
+  }
 }
 EOF
+fi
+
+# Pre-generate 1:1 wallpaper crops and cache if wallpapers exist and binaries are built
+if [[ -x "$ROOT_DIR/build/zenith-native" ]]; then
+    log_info "Bootstrapping initial wallpaper, blur cache, and color palette..."
+    INIT_WALL="$(find "$ROOT_DIR/wallpapers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | head -1 || true)"
+    if [[ -n "$INIT_WALL" && -r "$INIT_WALL" ]]; then
+        printf '%s\n' "$INIT_WALL" > "$STATE_HOME/zenith/current_wallpaper"
+        "$ROOT_DIR/build/zenith-native" align 2>/dev/null || true
+        "$ROOT_DIR/build/zenith-native" theme 2>/dev/null || true
+        log_ok "Initial wallpaper theme & crops generated."
+    fi
 fi
 
 if [[ -f "$HOME/.bashrc" ]] && ! grep -q "zenith/scripts/prompt.sh" "$HOME/.bashrc"; then

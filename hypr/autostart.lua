@@ -7,8 +7,8 @@ hl.on("hyprland.start", function()
     -- 1. Sub-millisecond Terminal Client-Server Daemon
     hl.exec_cmd("foot --server")
 
-    -- 2. Quickshell Dynamic Island
-    hl.exec_cmd("quickshell -s " .. paths.root .. "/shell.qml")
+    -- 2. Quickshell Dynamic Island (using repo path for clean relative imports)
+    hl.exec_cmd("quickshell -p " .. paths.root)
 
     -- 3. Wallpaper Transition Daemon & initial wallpaper
     hl.exec_cmd("swww-daemon")
