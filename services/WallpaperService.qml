@@ -4,7 +4,13 @@ import Quickshell
 import Quickshell.Io
 import "../core"
 
-// Sole owner of the serialized awww lifecycle and wallpaper/palette transaction.
+// Sole owner of the wallpaper + palette transaction.
+//
+// Every mutation goes through `build/zenith-native`, which applies the
+// wallpaper with swww, regenerates the Material palette, rewrites the
+// Hyprland / foot / rofi consumers, refreshes the launcher crops and records
+// the current selection. The QML side never shells out to ad-hoc helpers, so
+// there is exactly one implementation of "apply a wallpaper".
 QtObject {
     id: root
 
@@ -12,47 +18,30 @@ QtObject {
     property string currentWallpaper: ""
     property string pendingWallpaper: ""
     property string pendingScheme: ""
+    property string previousScheme: ""
     property string pendingThemeSourceMode: ""
     property string pendingThemeSourceColor: ""
-    property bool pendingRememberCustomColor: false
-    property string candidateWallpaper: ""
-    property string candidateToken: ""
-    property string candidateStatus: ""
-    property bool candidateReady: false
-    property string pendingMonitorName: ""
-    property bool directApplyPending: false
-    property string directRenderOutput: ""
-    property string directRenderError: ""
-    property string directPaletteOutput: ""
-    property string directPaletteError: ""
-    property string directPaletteToken: ""
-    property string queuedPaletteToken: ""
-    property var queuedPaletteCommand: []
+    property bool pendingRememberCustom: false
     property bool loading: false
     property bool applying: false
     property bool backendAvailable: false
-    property string backendKind: "awww"
     property string backendState: "starting"
-    property string backendDetail: "Checking awww…"
+    property string backendDetail: "Checking the swww renderer…"
     property string operationState: "idle"
     property string operationKind: ""
     property string operationOutput: ""
     property string operationError: ""
     property string errorMessage: ""
-    property bool cancelAfterExit: false
     property bool paletteAvailable: Theme.generatedAvailable
 
     readonly property string helperPath:
-        Quickshell.shellDir + "/scripts/wallpaperctl.sh"
-    readonly property string homeDirectory: Quickshell.env("HOME")
+        Quickshell.shellDir + "/build/zenith-native"
     readonly property var searchPaths: Config.wallpaper.directories.map(path =>
-        path.startsWith("/") ? path : homeDirectory + "/" + path)
+        path.startsWith("/") ? path : Quickshell.env("HOME") + "/" + path)
     readonly property string currentName: displayName(currentWallpaper)
     readonly property bool busy: operationProcess.running
-        || directRenderProcess.running
     readonly property string statusLabel: errorMessage
         || (backendState !== "ready" ? backendDetail
-        : candidateReady ? "Candidate palette prepared — Apply to change Zenith"
         : currentWallpaper ? currentName : "No wallpaper selected")
 
     signal wallpaperApplied(string path, bool paletteUpdated)
@@ -83,12 +72,71 @@ QtObject {
         return SettingsStore.setWallpaperGalleryColumns(columns)
     }
 
-    function setRefreshOnOpen(enabled: bool): void {
-        SettingsStore.setWallpaperRefreshOnOpen(enabled)
-    }
-
     function setTransition(transition: string): bool {
         return SettingsStore.setWallpaperTransition(transition)
+    }
+
+    // Picker layout selection lives in picker/config.json (active_layout),
+    // which the standalone picker watches, so changes apply without a restart.
+    readonly property var pickerLayouts: [
+        "shell-bottom-dock.qml",
+        "shell-classic.qml",
+        "shell-coverflow.qml",
+        "shell-coverflow-clear.qml",
+        "shell-coverflow-minimal.qml",
+        "shell-floating.qml",
+        "shell-floating-center-reflection.qml",
+        "shell-floating-clean.qml",
+        "shell-floating-clear.qml",
+        "shell-floating-clear-clean.qml",
+        "shell-floating-minimal.qml",
+        "shell-floating-minimal-clean.qml",
+        "shell-grid-view.qml",
+        "shell-hexcomb.qml"
+    ]
+    property string pickerLayout: "shell-floating.qml"
+
+    function pickerLayoutLabel(name: string): string {
+        return name.replace(/\\.qml$/, "").replace(/^shell-/, "")
+            .split("-")
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(" ")
+    }
+
+    property FileView pickerConfigFile: FileView {
+        path: Quickshell.shellDir + "/picker/config.json"
+        blockLoading: true
+        blockWrites: true
+        atomicWrites: true
+        preload: true
+        printErrors: false
+        onLoaded: root.readPickerConfig(text())
+    }
+
+    function readPickerConfig(raw: string): void {
+        try {
+            const parsed = JSON.parse(raw || "{}")
+            const layout = String(parsed?.active_layout || "")
+            if (pickerLayouts.includes(layout))
+                pickerLayout = layout
+        } catch (error) {
+            console.warn("Zenith could not read picker config:", error)
+        }
+    }
+
+    function setPickerLayout(name: string): bool {
+        if (!pickerLayouts.includes(name) || name === pickerLayout)
+            return false
+        try {
+            const parsed = JSON.parse(pickerConfigFile.text() || "{}")
+            parsed.active_layout = name
+            pickerConfigFile.setText(JSON.stringify(parsed, null, 2) + "\n")
+            pickerLayout = name
+            return true
+        } catch (error) {
+            console.warn("Zenith could not update the picker layout:", error)
+            return false
+        }
     }
 
     function setTransitionDuration(duration: real): bool {
@@ -97,6 +145,25 @@ QtObject {
 
     function resetPreferences(): void {
         SettingsStore.resetWallpaper()
+    }
+
+    function parseStatus(text: string): void {
+        for (const line of text.split("\n")) {
+            if (line.startsWith("CURRENT="))
+                currentWallpaper = line.substring(8).trim()
+            if (!line.startsWith("STATE="))
+                continue
+            backendState = line.substring(6).trim()
+            backendAvailable = backendState === "ready"
+            if (backendState === "ready")
+                backendDetail = "swww renderer ready"
+            else if (backendState === "starting")
+                backendDetail = "Starting the swww renderer…"
+            else if (backendState === "missing")
+                backendDetail = "swww is required for Zenith wallpapers (sudo pacman -S swww)"
+            else
+                backendDetail = "swww is unavailable; Retry to check again"
+        }
     }
 
     function beginOperation(kind: string, command: var): bool {
@@ -114,179 +181,79 @@ QtObject {
         if (discoveryProcess.running)
             return
         loading = true
-        discoveryProcess.command = [helperPath, "list"].concat(searchPaths)
+        discoveryProcess.command = [helperPath, "wallpaper", "list"]
         discoveryProcess.running = true
     }
 
     function bootstrap(manual: bool): void {
         if (busy || applying)
             return
-        backendState = manual ? "recovering" : "starting"
-        backendAvailable = false
-        backendDetail = manual ? "Retrying Zenith's awww renderer…"
-            : "Starting Zenith's awww renderer…"
+        backendState = manual ? "starting" : "starting"
+        backendDetail = manual ? "Re-checking the swww renderer…"
+            : "Starting the swww renderer…"
         errorMessage = ""
-        beginOperation("bootstrap", [helperPath, "bootstrap",
-            manual ? "manual" : "auto"])
+        beginOperation("probe", [helperPath, "wallpaper", "probe"])
     }
 
     function retry(): void {
         bootstrap(true)
     }
 
-    function selectCandidate(path: string): bool {
-        if (busy || applying || directPaletteProcess.running
-                || queuedPaletteCommand.length > 0
-                || !wallpapers.some(item => item.path === path))
-            return false
-        candidateReady = false
-        candidateWallpaper = path
-        candidateToken = String(Date.now()) + "-" + Math.random()
-        candidateStatus = "Generating local palette…"
-        errorMessage = ""
-        operationState = "previewing"
-        return beginOperation("candidate", [helperPath, "candidate", path,
-            Config.wallpaper.scheme, candidateToken,
-            Config.appearance.themeSourceMode,
-            Config.appearance.themeSourceColor])
-    }
-
-    // Render a gallery choice first. Palette extraction is deliberately a
-    // separate, stale-safe background operation so large images do not delay
-    // the visible wallpaper transition.
     function applyWallpaper(path: string, monitorName: string): bool {
         if (busy || applying || !wallpapers.some(item => item.path === path))
             return false
-        const names = outputNames(monitorName)
-        if (!names) {
-            errorMessage = "No live display available"
-            return false
-        }
-        candidateToken = String(Date.now()) + "-apply-" + Math.random()
-        candidateStatus = "Applying wallpaper…"
+        if (Config.wallpaper.target === "all")
+            monitorName = "all"
         pendingWallpaper = path
-        pendingMonitorName = monitorName
-        directApplyPending = true
+        applying = true
         errorMessage = ""
         operationState = "applying"
-        applying = true
-        directRenderOutput = ""
-        directRenderError = ""
-        directRenderProcess.command = [helperPath, "render", path,
-            Config.wallpaper.scheme, Config.wallpaper.target, names,
-            Config.wallpaper.transition,
-            String(Config.wallpaper.transitionDuration),
-            Config.appearance.reducedMotion ? "true" : "false", candidateToken,
-            Config.appearance.themeSourceMode,
-            Config.appearance.themeSourceColor]
-        directRenderProcess.running = true
-        return true
-    }
-
-    function queuePalette(path: string, token: string): void {
-        queuedPaletteCommand = [helperPath, "palette", path,
-            Config.wallpaper.scheme, token, Config.appearance.themeSourceMode,
-            Config.appearance.themeSourceColor]
-        queuedPaletteToken = token
-        if (!directPaletteProcess.running)
-            startQueuedPalette()
-    }
-
-    function startQueuedPalette(): void {
-        if (queuedPaletteCommand.length === 0)
-            return
-        directPaletteOutput = ""
-        directPaletteError = ""
-        directPaletteToken = queuedPaletteToken
-        queuedPaletteToken = ""
-        directPaletteProcess.command = queuedPaletteCommand
-        queuedPaletteCommand = []
-        directPaletteProcess.running = true
-    }
-
-    function clearCandidateState(): void {
-        candidateWallpaper = ""
-        candidateToken = ""
-        candidateReady = false
-        candidateStatus = ""
-    }
-
-    function cancelCandidate(): void {
-        if (applying)
-            return
-        clearCandidateState()
-        operationState = "idle"
-        if (busy) {
-            cancelAfterExit = true
-            operationProcess.running = false
-            return
-        }
-        beginOperation("cancel", [helperPath, "cancel-candidate"])
-    }
-
-    function outputNames(monitorName: string): string {
-        return Config.wallpaper.target === "all"
-            ? HyprlandService.connectedMonitors.map(monitor => monitor.name)
-                .filter(Boolean).join(",") : monitorName
-    }
-
-    function applyCandidate(monitorName: string): bool {
-        if (!candidateReady || !backendAvailable || busy || applying
-                || directPaletteProcess.running
-                || queuedPaletteCommand.length > 0)
-            return false
-        const names = outputNames(monitorName)
-        if (!names) {
-            errorMessage = "No live display available"
-            return false
-        }
-        applying = true
-        operationState = "applying"
-        pendingWallpaper = candidateWallpaper
-        errorMessage = ""
-        return beginOperation("apply", [helperPath, "apply",
-            candidateWallpaper, Config.wallpaper.scheme,
-            Config.wallpaper.target, names, Config.wallpaper.transition,
-            String(Config.wallpaper.transitionDuration),
-            Config.appearance.reducedMotion ? "true" : "false",
-            candidateToken, Config.appearance.themeSourceMode,
-            Config.appearance.themeSourceColor])
+        return beginOperation("apply", [helperPath, "wallpaper", "set", path,
+            "--transition", Config.wallpaper.transition,
+            "--duration", String(Config.wallpaper.transitionDuration),
+            "--monitor", monitorName || "",
+            Config.appearance.reducedMotion ? "--reduced-motion" : ""].filter(
+                argument => argument.length > 0))
     }
 
     function changeScheme(scheme: string): void {
         if (scheme === Config.wallpaper.scheme || busy || applying
-                || directPaletteProcess.running
-                || queuedPaletteCommand.length > 0
                 || (Config.appearance.themeSourceMode === "wallpaper"
                     && !currentWallpaper))
             return
         pendingScheme = scheme
-        if (Config.appearance.themeSourceMode === "color") {
-            candidateToken = String(Date.now()) + "-color-scheme"
-            errorMessage = ""
-            operationState = "changingScheme"
-            beginOperation("colorScheme", [helperPath, "theme-source", "color",
-                Config.appearance.themeSourceColor, currentWallpaper,
-                scheme, candidateToken])
+        previousScheme = Config.wallpaper.scheme
+        if (!SettingsStore.setScheme(scheme)) {
+            pendingScheme = ""
+            previousScheme = ""
             return
         }
-        candidateWallpaper = currentWallpaper
-        candidateToken = String(Date.now()) + "-scheme"
-        candidateReady = false
-        candidateStatus = "Generating local palette…"
         errorMessage = ""
         operationState = "changingScheme"
-        beginOperation("schemeCandidate", [helperPath, "candidate",
-            currentWallpaper, scheme, candidateToken,
-            Config.appearance.themeSourceMode,
-            Config.appearance.themeSourceColor])
+        if (Config.appearance.themeSourceMode === "color") {
+            beginOperation("colorScheme", [helperPath, "theme", "color",
+                Config.appearance.themeSourceColor])
+        } else {
+            beginOperation("scheme", [helperPath, "theme", "refresh"])
+        }
+    }
+
+    function refreshPaletteForMode(): bool {
+        if (busy || applying)
+            return false
+        errorMessage = ""
+        operationState = "changingMode"
+        if (Config.appearance.themeSourceMode === "color") {
+            return beginOperation("mode", [helperPath, "theme", "color",
+                Config.appearance.themeSourceColor])
+        }
+        return beginOperation("mode", [helperPath, "theme", "refresh"])
     }
 
     function changeThemeSource(mode: string, color: string,
             rememberCustom: bool): bool {
         const normalized = SettingsStore.normalizedThemeColor(color)
-        if (busy || applying || directPaletteProcess.running
-                || queuedPaletteCommand.length > 0
+        if (busy || applying
                 || (mode === "wallpaper" && !currentWallpaper)
                 || (mode !== "wallpaper" && mode !== "color")
                 || (mode === "color" && !normalized))
@@ -298,43 +265,16 @@ QtObject {
                 SettingsStore.setThemeSourceColor(normalized, true)
             return false
         }
-        pendingThemeSourceMode = mode
-        pendingThemeSourceColor = mode === "color" ? normalized : ""
-        pendingRememberCustomColor = rememberCustom
-        candidateToken = String(Date.now()) + "-theme-source"
         errorMessage = ""
         operationState = "changingThemeSource"
-        return beginOperation("themeSource", [helperPath, "theme-source",
-            pendingThemeSourceMode, pendingThemeSourceColor,
-            currentWallpaper, Config.wallpaper.scheme, candidateToken])
-    }
-
-    function parseStatus(text: string): void {
-        for (const line of text.split("\n")) {
-            if (line.startsWith("CURRENT="))
-                currentWallpaper = line.substring(8)
-            if (!line.startsWith("STATE="))
-                continue
-            backendState = line.substring(6)
-            backendAvailable = backendState === "ready"
-            if (backendState === "ready")
-                backendDetail = "awww renderer ready"
-            else if (backendState === "recovering")
-                backendDetail = "Recovering Zenith's awww renderer…"
-            else if (backendState === "missing")
-                backendDetail = "awww is required for Zenith wallpapers (sudo pacman -S awww)"
-            else if (backendState === "conflict")
-                backendDetail = "Another wallpaper renderer is active; stop or reconfigure it first"
-            else if (backendState === "exhausted")
-                backendDetail = "Automatic awww recovery paused after three attempts — Retry manually"
-            else
-                backendDetail = "awww is unavailable; Retry to check again"
+        pendingThemeSourceMode = mode
+        pendingThemeSourceColor = normalized
+        pendingRememberCustom = rememberCustom
+        if (mode === "color") {
+            return beginOperation("themeSource", [helperPath, "theme", "color",
+                normalized])
         }
-    }
-
-    function requestHealthProbe(): void {
-        if (!busy && !applying)
-            beginOperation("probe", [helperPath, "probe"])
+        return beginOperation("themeSource", [helperPath, "theme", "refresh"])
     }
 
     function finishOperation(exitCode: int): void {
@@ -344,143 +284,81 @@ QtObject {
         parseStatus(output)
         operationKind = ""
 
-        if (cancelAfterExit) {
-            cancelAfterExit = false
-            pendingScheme = ""
-            errorMessage = ""
-            Qt.callLater(() => beginOperation("cancel",
-                [helperPath, "cancel-candidate"]))
-            return
-        }
-
-        if (kind === "bootstrap") {
-            if (exitCode !== 0) {
-                backendAvailable = false
-                if (backendState === "starting" || backendState === "recovering")
-                    backendState = "unavailable"
-                errorMessage = detail || backendDetail
-            } else {
-                backendState = "ready"
-                backendAvailable = true
-                backendDetail = "awww renderer ready"
-                errorMessage = ""
-            }
-            operationState = "idle"
-            return
-        }
-
         if (kind === "probe") {
-            if (backendState === "ready") {
-                backendAvailable = true
-                return
-            }
-            backendAvailable = false
-            if (backendState !== "missing" && backendState !== "conflict"
-                    && backendState !== "exhausted")
-                Qt.callLater(() => bootstrap(false))
+            operationState = "idle"
+            if (backendState !== "ready")
+                errorMessage = exitCode === 0 ? "" : (detail || backendDetail)
             return
         }
 
-        if (kind === "candidate" || kind === "directCandidate"
-                || kind === "schemeCandidate") {
-            if (exitCode !== 0) {
-                candidateReady = false
-                candidateStatus = "Palette preparation failed"
-                errorMessage = detail || "Palette generation failed"
-                pendingScheme = ""
-                pendingWallpaper = ""
-                pendingMonitorName = ""
-                directApplyPending = false
-                clearCandidateState()
-                operationState = "idle"
-                return
-            }
-            candidateReady = true
-            candidateStatus = "Palette prepared locally"
-            if (kind === "schemeCandidate") {
-                candidateStatus = "Verifying renderer before palette publication…"
-                Qt.callLater(() => beginOperation("scheme", [helperPath,
-                    "scheme", candidateWallpaper, pendingScheme,
-                    candidateToken, Config.appearance.themeSourceMode,
-                    Config.appearance.themeSourceColor]))
-            } else if (kind === "directCandidate") {
-                candidateStatus = "Applying wallpaper…"
-                Qt.callLater(() => root.applyCandidate(root.pendingMonitorName))
-            } else {
-                operationState = "ready"
-            }
-            return
-        }
-
-        if (kind === "apply" || kind === "scheme") {
-            const committed = exitCode === 0 && output.includes("COMMITTED=true")
+        if (kind === "apply") {
             applying = false
-            pendingWallpaper = ""
-            pendingMonitorName = ""
+            const committed = exitCode === 0 && output.includes("COMMITTED=true")
             if (committed) {
-                const appliedPath = currentWallpaper
+                const applied = pendingWallpaper
+                currentWallpaper = applied
+                pendingWallpaper = ""
                 paletteAvailable = true
-                if (kind === "scheme")
-                    SettingsStore.setScheme(pendingScheme)
-                clearCandidateState()
-                pendingScheme = ""
-                directApplyPending = false
                 errorMessage = ""
                 operationState = "idle"
-                wallpaperApplied(appliedPath, true)
+                wallpaperApplied(applied, output.includes("PALETTE=updated"))
             } else {
-                errorMessage = detail || "Wallpaper transaction failed; previous state was restored"
-                if (kind === "scheme" || directApplyPending) {
-                    pendingScheme = ""
-                    clearCandidateState()
-                    Qt.callLater(() => beginOperation("cancel",
-                        [helperPath, "cancel-candidate"]))
-                }
-                directApplyPending = false
+                pendingWallpaper = ""
+                errorMessage = detail || "Wallpaper could not be applied"
                 operationState = "idle"
                 recoveryTimer.restart()
             }
             return
         }
 
-        if (kind === "themeSource") {
-            const committed = exitCode === 0 && output.includes("COMMITTED=true")
+        if (kind === "scheme" || kind === "colorScheme") {
+            const committed = exitCode === 0 && output.includes("PALETTE=updated")
             if (committed) {
-                if (pendingThemeSourceMode === "wallpaper")
-                    SettingsStore.setThemeSourceWallpaper()
-                else
-                    SettingsStore.setThemeSourceColor(
-                        pendingThemeSourceColor, pendingRememberCustomColor)
                 paletteAvailable = true
                 errorMessage = ""
+                wallpaperApplied(currentWallpaper, true)
             } else {
-                errorMessage = detail || "Theme source generation failed"
-            }
-            pendingThemeSourceMode = ""
-            pendingThemeSourceColor = ""
-            pendingRememberCustomColor = false
-            operationState = "idle"
-            return
-        }
-
-        if (kind === "colorScheme") {
-            const committed = exitCode === 0 && output.includes("COMMITTED=true")
-            if (committed) {
-                SettingsStore.setScheme(pendingScheme)
-                paletteAvailable = true
-                errorMessage = ""
-            } else {
+                if (previousScheme.length > 0)
+                    SettingsStore.setScheme(previousScheme)
                 errorMessage = detail || "Palette generation failed"
             }
             pendingScheme = ""
+            previousScheme = ""
             operationState = "idle"
             return
         }
 
-        if (kind === "cancel") {
+        if (kind === "mode") {
+            const committed = exitCode === 0 && output.includes("PALETTE=updated")
+            if (committed) {
+                paletteAvailable = true
+                errorMessage = ""
+                wallpaperApplied(currentWallpaper, true)
+            } else {
+                errorMessage = detail || "Theme mode could not be regenerated"
+            }
             operationState = "idle"
-            if (exitCode !== 0)
-                errorMessage = detail || "Candidate cleanup failed"
+            return
+        }
+
+        if (kind === "themeSource") {
+            const committed = exitCode === 0 && output.includes("PALETTE=updated")
+            if (committed) {
+                if (pendingThemeSourceMode === "color")
+                    SettingsStore.setThemeSourceColor(
+                        pendingThemeSourceColor, pendingRememberCustom)
+                else
+                    SettingsStore.setThemeSourceWallpaper()
+                pendingThemeSourceMode = ""
+                pendingThemeSourceColor = ""
+                pendingRememberCustom = false
+                paletteAvailable = true
+                errorMessage = ""
+                wallpaperApplied(currentWallpaper, true)
+            } else {
+                errorMessage = detail || "Theme source generation failed"
+            }
+            operationState = "idle"
         }
     }
 
@@ -520,72 +398,18 @@ QtObject {
         onExited: exitCode => root.finishOperation(exitCode)
     }
 
-    property Process directRenderProcess: Process {
-        stdout: StdioCollector {
-            onStreamFinished: root.directRenderOutput = text
-        }
-        stderr: StdioCollector {
-            onStreamFinished: root.directRenderError = text
-        }
-        onExited: exitCode => {
-            const output = root.directRenderOutput
-            root.parseStatus(output)
-            root.applying = false
-            root.pendingMonitorName = ""
-            if (exitCode === 0 && output.includes("COMMITTED=true")) {
-                const appliedPath = root.pendingWallpaper
-                root.currentWallpaper = appliedPath
-                root.pendingWallpaper = ""
-                root.directApplyPending = false
-                root.errorMessage = ""
-                root.operationState = "idle"
-                root.wallpaperApplied(appliedPath, false)
-                root.queuePalette(appliedPath, root.candidateToken)
-            } else {
-                root.pendingWallpaper = ""
-                root.directApplyPending = false
-                root.operationState = "idle"
-                root.errorMessage = root.directRenderError.trim()
-                    || "Wallpaper rendering failed; previous wallpaper was restored"
-                root.recoveryTimer.restart()
-            }
-        }
-    }
-
-    property Process directPaletteProcess: Process {
-        stdout: StdioCollector {
-            onStreamFinished: root.directPaletteOutput = text
-        }
-        stderr: StdioCollector {
-            onStreamFinished: root.directPaletteError = text
-        }
-        onExited: exitCode => {
-            const current = root.directPaletteToken === root.candidateToken
-            const committed = exitCode === 0
-                && root.directPaletteOutput.includes("COMMITTED=true")
-            if (current && committed) {
-                root.paletteAvailable = true
-                root.errorMessage = ""
-                root.wallpaperApplied(root.currentWallpaper,
-                    root.directPaletteOutput.includes("PALETTE=updated"))
-            } else if (current && exitCode !== 0
-                    && !root.directPaletteError.includes("stale palette request")) {
-                root.errorMessage = root.directPaletteError.trim()
-                    || "Wallpaper changed, but palette generation failed"
-            }
-            Qt.callLater(() => root.startQueuedPalette())
-        }
-    }
-
     property Timer healthTimer: Timer {
-        interval: 15000
+        interval: 20000
         repeat: true
         running: true
-        onTriggered: root.requestHealthProbe()
+        onTriggered: {
+            if (!root.busy && !root.applying)
+                root.beginOperation("probe", [root.helperPath, "wallpaper", "probe"])
+        }
     }
 
     property Timer recoveryTimer: Timer {
-        interval: 300
-        onTriggered: root.requestHealthProbe()
+        interval: 600
+        onTriggered: root.bootstrap(true)
     }
 }

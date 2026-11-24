@@ -1,0 +1,2 @@
+module Zenith.PickerTheme
+singleton Zn 1.0 Zn.qml

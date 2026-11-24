@@ -1,16 +1,11 @@
 pragma Singleton
 import QtQuick
+import Quickshell
 import Quickshell.Io
 
 QtObject {
     id: root
 
-    signal launcherToggleRequested()
-    signal launcherOpenRequested()
-    signal launcherCloseRequested()
-    signal commandLauncherToggleRequested()
-    signal commandLauncherOpenRequested()
-    signal commandLauncherCloseRequested()
     signal controlCenterToggleRequested()
     signal controlCenterOpenRequested()
     signal controlCenterCloseRequested()
@@ -28,48 +23,7 @@ QtObject {
     signal settingsOpenRequested(string section)
     signal settingsCloseRequested()
     signal insightOpenRequested(string page)
-    signal notesToggleRequested()
-    signal notesOpenRequested()
-    signal notesCloseRequested()
-    signal newNoteRequested()
 
-    property IpcHandler launcherIpc: IpcHandler {
-        target: "launcher"
-
-        function toggle(): string {
-            root.launcherToggleRequested()
-            return "LAUNCHER_TOGGLE_SUCCESS"
-        }
-
-        function open(): string {
-            root.launcherOpenRequested()
-            return "LAUNCHER_OPEN_SUCCESS"
-        }
-
-        function close(): string {
-            root.launcherCloseRequested()
-            return "LAUNCHER_CLOSE_SUCCESS"
-        }
-    }
-
-    property IpcHandler commandLauncherIpc: IpcHandler {
-        target: "command-launcher"
-
-        function toggle(): string {
-            root.commandLauncherToggleRequested()
-            return "COMMAND_LAUNCHER_TOGGLE_SUCCESS"
-        }
-
-        function open(): string {
-            root.commandLauncherOpenRequested()
-            return "COMMAND_LAUNCHER_OPEN_SUCCESS"
-        }
-
-        function close(): string {
-            root.commandLauncherCloseRequested()
-            return "COMMAND_LAUNCHER_CLOSE_SUCCESS"
-        }
-    }
 
     property IpcHandler controlCenterIpc: IpcHandler {
         target: "control-center"
@@ -248,8 +202,11 @@ QtObject {
         }
 
         function wallpaper(): string {
-            root.insightOpenRequested("wallpaper")
-            return "WALLPAPER_OPEN_SUCCESS"
+            // The old in-island wallpaper grid was replaced by the standalone
+            // picker; keep the IPC endpoint but launch the real picker.
+            Quickshell.execDetached([Quickshell.shellDir
+                + "/build/zenith-ctl", "toggle", "picker"])
+            return "WALLPAPER_PICKER_OPEN_SUCCESS"
         }
 
         function personalize(): string {
@@ -263,27 +220,4 @@ QtObject {
         }
     }
 
-    property IpcHandler notesIpc: IpcHandler {
-        target: "notes"
-
-        function toggle(): string {
-            root.notesToggleRequested()
-            return "NOTES_TOGGLE_SUCCESS"
-        }
-
-        function open(): string {
-            root.notesOpenRequested()
-            return "NOTES_OPEN_SUCCESS"
-        }
-
-        function close(): string {
-            root.notesCloseRequested()
-            return "NOTES_CLOSE_SUCCESS"
-        }
-
-        function create(): string {
-            root.newNoteRequested()
-            return "NOTES_CREATE_SUCCESS"
-        }
-    }
 }

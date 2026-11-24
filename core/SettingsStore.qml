@@ -10,7 +10,7 @@ QtObject {
     property bool loaded: false
     property string errorMessage: ""
 
-    readonly property var validModes: ["auto", "dark", "light"]
+    readonly property var validModes: ["dark", "light"]
     readonly property var validMaterials: ["solid", "glass"]
     readonly property var validSchemes: [
         "scheme-content", "scheme-tonal-spot", "scheme-vibrant",
@@ -31,10 +31,6 @@ QtObject {
         "spotlight", "random"
     ]
     readonly property var validIslandPolicies: ["all", "primary"]
-    readonly property var validCommandHistorySources: ["auto", "zsh", "bash", "fish"]
-    readonly property var validCommandTerminals: [
-        "auto", "kitty", "foot", "alacritty", "ghostty"
-    ]
     readonly property var validRestIslandItems: [
         "PowerProfile", "Dnd", "Weather", "KeepAwake"
     ]
@@ -453,10 +449,6 @@ QtObject {
         return true
     }
 
-    function setWallpaperRefreshOnOpen(enabled: bool): void {
-        setValue("wallpaper", "refreshOnOpen", enabled)
-    }
-
     function setWallpaperTransition(transition: string): bool {
         return setValidatedValue("wallpaper", "transition", transition,
             validWallpaperTransitions)
@@ -466,7 +458,7 @@ QtObject {
         const numeric = Number(duration)
         if (!Number.isFinite(numeric))
             return false
-        // Store a stable tenth-second value so awww never sees unbounded UI noise.
+        // Store a stable tenth-second value so swww never sees unbounded UI noise.
         setValue("wallpaper", "transitionDuration", Math.round(
             Math.max(0.3, Math.min(2.5, numeric)) * 10) / 10)
         return true
@@ -498,20 +490,6 @@ QtObject {
 
     function resetDashboard(): void {
         resetSection("dashboard")
-    }
-
-    function setCommandHistorySource(source: string): bool {
-        return setValidatedValue("commandLauncher", "historySource", source,
-            validCommandHistorySources)
-    }
-
-    function setCommandTerminal(terminal: string): bool {
-        return setValidatedValue("commandLauncher", "terminal", terminal,
-            validCommandTerminals)
-    }
-
-    function setCommandHistorySuggestions(enabled: bool): void {
-        setValue("commandLauncher", "historySuggestions", enabled)
     }
 
     function setWeatherLocation(locationName: string, latitude,
@@ -546,9 +524,9 @@ QtObject {
     }
 
     function setShortcutEnabled(action: string, enabled: bool): bool {
-        if (["launcher", "commandLauncher", "clipboard", "settings", "notifications",
+        if (["launcher", "clipboard", "settings", "notifications",
                 "wallpaper", "controlCenter", "lock", "regionScreenshot",
-                "regionRecording", "notes", "newNote"].indexOf(action) < 0)
+                "regionRecording"].indexOf(action) < 0)
             return false
         setValue("shortcuts", action, enabled)
         return true
@@ -589,17 +567,16 @@ QtObject {
     function save(): void {
         if (!loaded)
             return
-        settingsFile.setText(JSON.stringify({
-            version: 1,
-            settings: values
-        }, null, 2))
+        settingsFile.setText(JSON.stringify(values, null, 2))
     }
 
     function load(raw: string): void {
         try {
             const parsed = JSON.parse(raw)
+            // Legacy releases wrapped the section map in { version, settings }.
             values = parsed?.settings && typeof parsed.settings === "object"
-                ? parsed.settings : ({})
+                ? parsed.settings
+                : (parsed && typeof parsed === "object" ? parsed : ({}))
             errorMessage = ""
         } catch (error) {
             values = ({})
@@ -610,7 +587,7 @@ QtObject {
     }
 
     property FileView settingsFile: FileView {
-        path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation)
+        path: StandardPaths.writableLocation(StandardPaths.GenericConfigLocation)
             + "/zenith/settings.json"
         blockLoading: true
         blockWrites: true

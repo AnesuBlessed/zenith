@@ -136,14 +136,14 @@ QtObject {
         if (!outputPath || !target)
             return false
 
-        const command = ["gpu-screen-recorder", "-w", target,
-            "-f", Config.capture.frameRate.toString(), "-k", "h264",
-            "-c", "mp4", "-fm", "vfr", "-cursor", "yes"]
-        if (region)
-            command.push("-region", region)
+        const command = ["wf-recorder", "-f", outputPath, "-c", "libx264",
+            "-p", "preset=veryfast", "-p", "crf=20"]
         if (pendingRecordingAudio)
-            command.push("-a", "default_output")
-        command.push("-o", outputPath)
+            command.push("--audio=default")
+        if (region)
+            command.push("-g", region)
+        else
+            command.push("-o", target)
 
         lastOutputPath = outputPath
         recorderError = ""

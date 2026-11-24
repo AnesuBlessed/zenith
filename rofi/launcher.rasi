@@ -18,7 +18,7 @@ configuration {
     drun-reload-desktop-cache:   false;
 }
 
-@theme "theme.rasi"
+@import "theme.rasi"
 @import "~/.cache/zenith/theme-override.rasi"
 
 // Main Window //
@@ -55,7 +55,7 @@ dummywall {
     orientation:                 horizontal;
     children:                    [ "mode-switcher" , "inputbar" ];
     background-color:            transparent;
-    background-image:            url("~/.cache/zenith/wall.thmb", height);
+    background-image:            url("~/.cache/zenith/wall.launcher.png", height);
     border-radius:               16px 0px 0px 16px;
 }
 
@@ -67,7 +67,7 @@ mode-switcher {
     padding:                     75px 8px;
     spacing:                     14px;
     background-color:            transparent;
-    background-image:            url("~/.cache/zenith/wall.blur", height);
+    background-image:            url("~/.cache/zenith/wall.launcher.blur.png", height);
     border-radius:               16px 0px 0px 16px;
 }
 

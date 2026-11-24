@@ -26,8 +26,13 @@ QtObject {
     Component.onCompleted: refreshTerminalThemeStatus()
 
     function setMode(mode: string): void {
-        if (SettingsStore.setAppearanceMode(mode))
-            statusMessage = "Theme mode updated"
+        if (!SettingsStore.setAppearanceMode(mode))
+            return
+        statusMessage = "Theme mode updated"
+        // The shell can switch between the palette's dark/light tables
+        // instantly, but exported consumers (foot, rofi, Hyprlock) need a
+        // palette regeneration to pick the new mode.
+        WallpaperService.refreshPaletteForMode()
     }
 
     function setMaterial(material: string): void {

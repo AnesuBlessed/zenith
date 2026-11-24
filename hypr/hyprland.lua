@@ -19,6 +19,7 @@ package.loaded["autostart"] = nil
 package.loaded["looknfeel"] = nil
 package.loaded["keybinds"]  = nil
 package.loaded["rules"]     = nil
+package.loaded["shortcuts"] = nil
 
 -- Modular Component Inclusions
 require("paths")

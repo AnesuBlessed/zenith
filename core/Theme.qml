@@ -30,9 +30,7 @@ QtObject {
     property bool generatedAvailable: false
     property string generatedMode: "dark"
 
-    readonly property string effectiveMode: Config.appearance.mode === "auto"
-        ? (Config.appearance.wallpaperPaletteEnabled ? generatedMode : "dark")
-        : Config.appearance.mode
+    readonly property string effectiveMode: Config.appearance.mode
     readonly property bool dark: effectiveMode !== "light"
     readonly property var colors: generatedAvailable
             && Config.appearance.wallpaperPaletteEnabled

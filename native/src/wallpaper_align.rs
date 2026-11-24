@@ -84,18 +84,20 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let win_x = (mon.width.saturating_sub(win_w)) / 2;
     let win_y = (mon.height.saturating_sub(win_h)) / 2;
 
+    let pane_w = pane_w.min(screen.width()).max(1);
+    let launcher_h = win_h.min(screen.height()).max(1);
     let launcher_crop_x = (win_x + delta_x).min(screen.width().saturating_sub(pane_w));
-    let launcher_crop_y = (win_y + delta_y).min(screen.height().saturating_sub(win_h));
+    let launcher_crop_y = (win_y + delta_y).min(screen.height().saturating_sub(launcher_h));
 
     // A. 1:1 Exact crisp wallpaper slice for left banner
-    let launcher_slice = screen.crop_imm(launcher_crop_x, launcher_crop_y, pane_w, win_h);
+    let launcher_slice = screen.crop_imm(launcher_crop_x, launcher_crop_y, pane_w, launcher_h);
     let launcher_slice_path = cache_dir.join("wall.launcher.png");
-    launcher_slice.save(&launcher_slice_path)?;
+    save_atomic(&launcher_slice, &launcher_slice_path)?;
 
     // B. Frosted Glass Vertical Rail (56px width with edge-padded Gaussian blur)
-    let rail_w = 56u32;
+    let rail_w = 56u32.min(screen.width()).max(1);
     let rail_slice = screen
-        .crop_imm(launcher_crop_x, launcher_crop_y, rail_w, win_h)
+        .crop_imm(launcher_crop_x, launcher_crop_y, rail_w, launcher_h)
         .blur(10.0);
     
     // Subtle dark tint for glass depth
@@ -106,7 +108,7 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
         p[2] = ((p[2] as f32 * 0.75) + 24.0) as u8;
     }
     let launcher_blur_path = cache_dir.join("wall.launcher.blur.png");
-    rail_tinted.save(&launcher_blur_path)?;
+    save_atomic(&DynamicImage::ImageRgba8(rail_tinted), &launcher_blur_path)?;
 
     // -------------------------------------------------------------------------
     // 3. Anchored Clipboard Crop (Window: 360x430, top-right anchor)
@@ -116,6 +118,8 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let clip_x = mon.width.saturating_sub(clip_w + 12);
     let clip_y = 44u32; // Underneath the Dynamic Island
 
+    let clip_w = clip_w.min(screen.width()).max(1);
+    let clip_h = clip_h.min(screen.height()).max(1);
     let clip_crop_x = (clip_x + delta_x).min(screen.width().saturating_sub(clip_w));
     let clip_crop_y = (clip_y + delta_y).min(screen.height().saturating_sub(clip_h));
 
@@ -123,29 +127,27 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
         .crop_imm(clip_crop_x, clip_crop_y, clip_w, clip_h)
         .blur(12.0);
     let clip_slice_path = cache_dir.join("wall.clipboard.png");
-    clip_slice.save(&clip_slice_path)?;
-
-    // -------------------------------------------------------------------------
-    // 4. Pre-Bake Static Rasi Theme Overrides (Zero Hot-Path Subprocesses)
-    // -------------------------------------------------------------------------
-    let rasi_override = format!(
-        "// Pre-baked Zenith geometry & backdrop configuration\n\
-        dummywall {{\n\
-            background-image: url(\"{}\", height);\n\
-        }}\n\
-        mode-switcher {{\n\
-            background-image: url(\"{}\", height);\n\
-        }}\n\
-        wallbox {{\n\
-            background-image: url(\"{}\", width);\n\
-        }}\n",
-        launcher_slice_path.display(),
-        launcher_blur_path.display(),
-        clip_slice_path.display()
-    );
-
-    let rasi_path = cache_dir.join("theme-override.rasi");
-    atomic(&rasi_path, rasi_override)?;
+    save_atomic(&clip_slice, &clip_slice_path)?;
 
     Ok(())
+}
+
+/// Writes an image through a temp file + rename so a rofi window opened
+/// mid-transaction can never read a half-written PNG.
+fn save_atomic(image: &DynamicImage, path: &Path) -> Result {
+    // Temp name keeps the .png suffix: `image::save` picks the encoder from it.
+    let temp = path.with_file_name(format!(
+        "{}.tmp-{}.png",
+        path.file_stem().and_then(|s| s.to_str()).unwrap_or("crop"),
+        std::process::id()
+    ));
+    let result = (|| {
+        image.save(&temp)?;
+        fs::rename(&temp, path)?;
+        Ok(())
+    })();
+    if result.is_err() {
+        let _ = fs::remove_file(&temp);
+    }
+    result
 }

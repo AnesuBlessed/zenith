@@ -231,8 +231,6 @@ Item {
                                     ? "Library, color, and transitions"
                                 : root.section === "dashboard"
                                     ? "Overview appearance"
-                                : root.section === "command-launcher"
-                                    ? "Local history and terminal preferences"
                                 : root.section === "shortcuts"
                                     ? "Keybinds managed by Zenith"
                                     : "Explicit external theme ownership"
@@ -265,7 +263,7 @@ Item {
                             SettingsCard {
                                 Layout.fillWidth: true
                                 title: "Theme mode"
-                                detail: "Auto follows the generated wallpaper palette"
+                                detail: "Choose a dark or light palette for the shell"
                                 inlineLayout: true
                                 contentHeight: 36
                                 RowLayout {
@@ -274,7 +272,6 @@ Item {
                                     Item { Layout.fillWidth: true }
                                     Repeater {
                                         model: [
-                                            { id: "auto", label: "Auto" },
                                             { id: "dark", label: "Dark" },
                                             { id: "light", label: "Light" }
                                         ]
@@ -883,8 +880,27 @@ Item {
 
                             SettingsCard {
                                 Layout.fillWidth: true
+                                title: "Picker layout"
+                                detail: "Arrangement used by the wallpaper picker (Super + W); changes apply live while it is open"
+                                contentHeight: 176
+                                GridLayout { Layout.fillWidth: true; columns: 4; columnSpacing: Theme.space1; rowSpacing: Theme.space1
+                                    Repeater {
+                                        model: WallpaperService.pickerLayouts
+                                        delegate: SettingsChoice {
+                                            required property string modelData
+                                            Layout.fillWidth: true
+                                            label: WallpaperService.pickerLayoutLabel(modelData)
+                                            selected: WallpaperService.pickerLayout === modelData
+                                            onActivated: WallpaperService.setPickerLayout(modelData)
+                                        }
+                                    }
+                                }
+                            }
+
+                            SettingsCard {
+                                Layout.fillWidth: true
                                 title: "Gallery density"
-                                detail: "Changes browsing density without altering image files"
+                                detail: "Changes the identity-image grid density without altering image files"
                                 inlineLayout: true
                                 contentHeight: 36
                                 RowLayout {
@@ -908,15 +924,6 @@ Item {
                                         }
                                     }
                                 }
-                            }
-
-                            HeaderToggleCard {
-                                Layout.fillWidth: true
-                                title: "Library refresh"
-                                detail: "Rescan configured image folders when Wallpaper opens"
-                                checked: Config.wallpaper.refreshOnOpen
-                                onToggled: enabled => WallpaperService
-                                    .setRefreshOnOpen(enabled)
                             }
 
                             InfoStrip {
@@ -1056,101 +1063,6 @@ Item {
                         }
 
                         ColumnLayout {
-                            visible: root.section === "command-launcher"
-                            Layout.fillWidth: true
-                            spacing: Theme.space2
-
-                            SettingsCard {
-                                Layout.fillWidth: true
-                                title: "Shell history source"
-                                detail: "Read on demand from the current user's existing history"
-                                contentHeight: 34
-                                RowLayout {
-                                    anchors.fill: parent
-                                    spacing: Theme.space1
-                                    Item { Layout.fillWidth: true }
-                                    Repeater {
-                                        model: [
-                                            { id: "auto", label: "Auto" },
-                                            { id: "zsh", label: "Zsh" },
-                                            { id: "bash", label: "Bash" },
-                                            { id: "fish", label: "Fish" }
-                                        ]
-                                        delegate: SettingsChoice {
-                                            required property var modelData
-                                            compact: true
-                                            label: modelData.label
-                                            selected: Config.commandLauncher.historySource
-                                                === modelData.id
-                                            onActivated: SettingsStore
-                                                .setCommandHistorySource(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
-
-                            SettingsCard {
-                                Layout.fillWidth: true
-                                title: "Terminal"
-                                detail: "A new terminal opens on the current workspace"
-                                contentHeight: 34
-                                RowLayout {
-                                    anchors.fill: parent
-                                    spacing: Theme.space1
-                                    Item { Layout.fillWidth: true }
-                                    Repeater {
-                                        model: [
-                                            { id: "auto", label: "Auto" },
-                                            { id: "kitty", label: "Kitty" },
-                                            { id: "foot", label: "Foot" },
-                                            { id: "alacritty", label: "Alacritty" },
-                                            { id: "ghostty", label: "Ghostty" }
-                                        ]
-                                        delegate: SettingsChoice {
-                                            required property var modelData
-                                            compact: true
-                                            label: modelData.label
-                                            selected: Config.commandLauncher.terminal
-                                                === modelData.id
-                                            onActivated: SettingsStore
-                                                .setCommandTerminal(modelData.id)
-                                        }
-                                    }
-                                }
-                            }
-
-                            SettingsCard {
-                                Layout.fillWidth: true
-                                title: "History suggestions"
-                                detail: Config.commandLauncher.historySuggestions
-                                    ? "Recent local commands appear when the query is empty"
-                                    : "Only exact commands typed into the launcher are shown"
-                                contentHeight: 36
-                                RowLayout {
-                                    anchors.fill: parent
-                                    Text {
-                                        Layout.fillWidth: true
-                                        text: "Show local shell history"
-                                        color: Theme.surfaceText
-                                        font.family: Config.appearance.fontFamily
-                                        font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
-                                    }
-                                    SettingsToggle {
-                                        checked: Config.commandLauncher.historySuggestions
-                                        onToggled: enabled => SettingsStore
-                                            .setCommandHistorySuggestions(enabled)
-                                    }
-                                }
-                            }
-
-                            InfoStrip {
-                                Layout.fillWidth: true
-                                glyph: "󰆍"
-                                message: "History stays local and is never copied into an Zenith database. Enter runs; Ctrl+C or Ctrl+Enter copies without execution."
-                            }
-                        }
-
-                        ColumnLayout {
                             visible: root.section === "shortcuts"
                             Layout.fillWidth: true
                             spacing: Theme.space2
@@ -1227,6 +1139,7 @@ Item {
                                                 checked: ShortcutService
                                                     .enabled(modelData.id)
                                                 available: !ShortcutService.busy
+                                                    && ShortcutService.installed
                                                 onToggled: enabled => ShortcutService
                                                     .setEnabled(modelData.id, enabled)
                                             }

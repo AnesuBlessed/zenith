@@ -16,7 +16,7 @@ hl.bind = function(combo, action, opts)
     return raw_bind(combo, action)
 end
 
-local zenith_ctl = paths.root .. "/build/zenith-ctl"
+local zenith_ctl = paths.quote(paths.root .. "/build/zenith-ctl")
 
 -- =====================================================
 -- 1. Window Management
@@ -75,7 +75,7 @@ hl.bind(mainMod .. " + A", hl.dsp.exec_cmd(zenith_ctl .. " toggle launcher"))
 hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(zenith_ctl .. " toggle window"))
 
 -- Clipboard (0ms Anchored Rofi via C zenith-ctl)
-hl.bind(mainMod .. " + C", hl.dsp.exec_cmd(zenith_ctl .. " toggle clipboard"))
+hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(zenith_ctl .. " toggle clipboard"))
 hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("cliphist wipe"))
 
 -- File Manager (Thunar with Phone Cable Sharing Stack)
@@ -88,15 +88,18 @@ hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("firefox"))
 hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("codium || code"))
 
 -- Island Control Center (WiFi, Bluetooth, Settings)
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("quickshell ipc toggle control-center || true"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("quickshell ipc call control-center toggle || true"))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("quickshell ipc call control-center toggle || true"))
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call settings open || true"))
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc call notifications toggle || true"))
 
--- Wallpaper Shower Gallery (Cinematic Widescreen Gallery)
-hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(zenith_ctl .. " toggle gallery"))
+-- Wallpaper picker (standalone hyprquickpaper layouts + native backend)
+hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(zenith_ctl .. " toggle picker"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(paths.bin("zenith-native") .. " wallpaper random"))
 
 -- System & Session (Island Session Overlay)
-hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call session-page toggle || quickshell ipc call session-page open || true"))
+hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd("hyprlock"))
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call session-page toggle || true"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("hyprctl reload && " .. paths.bin("zenith-native") .. " align"))
 
 -- Laptop Lid Switch
@@ -110,6 +113,8 @@ hl.bind("switch:off:Lid Switch", hl.dsp.dpms("on"), { locked = true })
 hl.bind("Print",               hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | wl-copy"))
 hl.bind("SHIFT + Print",       hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | swappy -f -"))
 hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grim - | wl-copy"))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("quickshell ipc call capture screenshot region copy || true"))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("quickshell ipc call capture record region || true"))
 hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | tesseract - - | wl-copy"))
 
 -- Audio Hardware Controls
@@ -128,7 +133,9 @@ hl.bind("XF86MonBrightnessUp",   hl.dsp.exec_cmd("brightnessctl set 5%+"), { loc
 hl.bind("XF86MonBrightnessDown", hl.dsp.exec_cmd("brightnessctl set 5%-"), { locked = true, repeating = true })
 
 -- Media Playback
-hl.bind(mainMod .. " + Space", hl.dsp.exec_cmd("playerctl play-pause"))
+hl.bind(mainMod .. " + ALT + Space", hl.dsp.exec_cmd("playerctl play-pause"))
 hl.bind("XF86AudioPlay",       hl.dsp.exec_cmd("playerctl play-pause"), { locked = true })
 hl.bind("XF86AudioNext",       hl.dsp.exec_cmd("playerctl next"),       { locked = true })
 hl.bind("XF86AudioPrev",       hl.dsp.exec_cmd("playerctl previous"),   { locked = true })
+-- Managed by Settings > Shortcuts (scripts/shortcutctl.sh). Missing file is fine.
+pcall(require, "shortcuts")

@@ -519,18 +519,12 @@ QtObject {
             if (!match)
                 return
             const owner = match[1]
-            if (root.networkManagerChecked && owner !== root.networkManagerOwner) {
-                networkManagerCheck.stop()
-                restartManagedShell.running = true
-            }
+            if (root.networkManagerChecked && owner !== root.networkManagerOwner)
+                console.info("Zenith: NetworkManager was restarted")
             root.networkManagerOwner = owner
             root.networkManagerChecked = true
         }
     }
-    property Process restartManagedShell: Process {
-        command: ["systemctl", "--user", "restart", "zenith.service"]
-    }
-
     property Process runtimeQuery: Process {
         running: false
         stdout: StdioCollector {

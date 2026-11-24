@@ -488,19 +488,23 @@ PanelWindow {
         function onNotificationsCloseRequested(): void {
             islandController.closePage("notifications")
         }
+        function onClipboardToggleRequested(): void {
+            if (window.presentationTarget)
+                islandController.togglePage("clipboard")
+        }
+        function onClipboardOpenRequested(): void {
+            if (window.presentationTarget)
+                islandController.openPage("clipboard")
+        }
+        function onClipboardCloseRequested(): void {
+            islandController.closePage("clipboard")
+        }
         function onCaptureOpenRequested(): void {
             if (window.presentationTarget)
                 islandController.openPage("capture")
         }
         function onCaptureCloseRequested(): void {
             islandController.closePage("capture")
-        }
-        function onSessionOpenRequested(): void {
-            if (window.presentationTarget)
-                islandController.openPage("session")
-        }
-        function onSessionCloseRequested(): void {
-            islandController.closePage("session")
         }
         function onSettingsOpenRequested(section): void {
             if (window.presentationTarget) {

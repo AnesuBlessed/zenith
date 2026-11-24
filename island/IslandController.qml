@@ -50,8 +50,8 @@ QtObject {
         || expandedPage === "calendar" || expandedPage === "media-center"
         || expandedPage === "system" || expandedPage === "battery"
     readonly property bool dashboardPage: expandedPage === "overview"
-    readonly property bool wallpaperPage: expandedPage === "wallpaper"
-        || expandedPage === "identity-image"
+    readonly property bool wallpaperPage: expandedPage === "identity-image"
+    readonly property bool clipboardPage: expandedPage === "clipboard"
     readonly property bool capturePage: expandedPage === "capture"
     readonly property bool sessionPage: expandedPage === "session"
     readonly property bool settingsPage: expandedPage === "settings"
@@ -63,6 +63,7 @@ QtObject {
         ? (dashboardPage ? Config.dashboard.width
             : expandedPage === "notifications" ? Config.notifications.width
             : wallpaperPage ? Config.wallpaper.width
+            : clipboardPage ? Config.clipboard.width
             : capturePage ? Config.capture.width
             : sessionPage ? Config.session.width
             : settingsPage ? Config.settings.width
@@ -81,6 +82,7 @@ QtObject {
         ? (dashboardPage ? Config.dashboard.height
             : expandedPage === "notifications" ? Config.notifications.height
             : wallpaperPage ? Config.wallpaper.height
+            : clipboardPage ? Config.clipboard.height
             : capturePage ? Config.capture.height
             : sessionPage ? Config.session.height
             : settingsPage ? Config.settings.height

@@ -25,19 +25,16 @@ QtObject {
         : "Hyprland retains manual control"
     readonly property var entries: [
         { id: "launcher", label: "Application launcher", keys: "Super + A" },
-        { id: "commandLauncher", label: "Command launcher", keys: "Super + Ctrl + A" },
         { id: "clipboard", label: "Clipboard history", keys: "Super + V" },
         { id: "settings", label: "Zenith settings", keys: "Super + ," },
-        { id: "notifications", label: "Notifications", keys: "Super + N" },
-        { id: "wallpaper", label: "Wallpaper library", keys: "Super + Y" },
+        { id: "notifications", label: "Notifications", keys: "Super + Shift + N" },
+        { id: "wallpaper", label: "Wallpaper library", keys: "Super + W" },
         { id: "controlCenter", label: "Control Center", keys: "Super + Space" },
         { id: "lock", label: "Lock session", keys: "Super + Alt + L" },
         { id: "regionScreenshot", label: "Select-area screenshot",
             keys: "Super + Shift + S" },
         { id: "regionRecording", label: "Select-area recording",
             keys: "Super + Shift + R" },
-        { id: "notes", label: "Toggle Notes", keys: "Super + Alt + N" },
-        { id: "newNote", label: "New note", keys: "Super + Shift + N" }
     ]
 
     function enabled(action: string): bool {

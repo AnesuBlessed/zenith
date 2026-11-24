@@ -1,20 +1,14 @@
 #!/usr/bin/env bash
 # =============================================================================
-#  PROJECT ZENITH — Universal Arch Linux & Derivatives Installer
+#  PROJECT ZENITH — Arch Linux Installer
 # =============================================================================
 #  Supports: Arch Linux, EndeavourOS, CachyOS, Manjaro, Garuda, ArcoLinux
-#  Zero Python requirement. Pure compiled Rust & C + POSIX Shell.
+#  Zero Python: compiled Rust + C, POSIX shell, Quickshell/QML.
 # =============================================================================
 set -euo pipefail
 
-# ANSI Styling
-bold="\033[1m"
-dim="\033[2m"
-green="\033[32m"
-blue="\033[34m"
-yellow="\033[33m"
-red="\033[31m"
-reset="\033[0m"
+bold="\033[1m"; dim="\033[2m"; green="\033[32m"; blue="\033[34m"
+yellow="\033[33m"; red="\033[31m"; reset="\033[0m"
 
 log_info()  { printf "%b[INFO]%b  %s\n" "$blue" "$reset" "$*"; }
 log_ok()    { printf "%b[OK]%b    %s\n" "$green" "$reset" "$*"; }
@@ -23,6 +17,7 @@ log_err()   { printf "%b[ERROR]%b %s\n" "$red" "$reset" "$*" >&2; }
 die()       { log_err "$*"; exit 1; }
 
 ROOT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd -P)"
+[[ "$EUID" -ne 0 ]] || die "Run the installer as your desktop user, not as root."
 
 printf "%b" "$bold$blue"
 cat << "EOF"
@@ -35,241 +30,202 @@ cat << "EOF"
 EOF
 printf "%b\n" "$reset$dim  The Zero-Bloat, Event-Driven Desktop for Hyprland$reset\n"
 
-# 1. Distro Compatibility Verification (Arch + Derivatives)
-log_info "Verifying host distribution compatibility..."
-if [[ ! -r /etc/os-release ]]; then
-    die "/etc/os-release missing; cannot verify Linux distribution."
-fi
-
+# -----------------------------------------------------------------------------
+# 1. Host verification
+# -----------------------------------------------------------------------------
+[[ -r /etc/os-release ]] || die "/etc/os-release missing; cannot verify distribution."
 # shellcheck disable=SC1091
 source /etc/os-release
-IS_ARCH=false
-if [[ "${ID:-}" == "arch" || "${ID_LIKE:-}" =~ arch ]]; then
-    IS_ARCH=true
+if [[ "${ID:-}" != "arch" && ! "${ID_LIKE:-}" =~ arch ]]; then
+    die "Zenith requires Arch Linux or an Arch derivative (detected ID=${ID:-unknown})."
 fi
+log_ok "Host: ${NAME:-Arch Linux}"
 
-if [[ "$IS_ARCH" != true ]]; then
-    die "Zenith requires Arch Linux or an Arch-derivative (detected ID=${ID:-unknown}, ID_LIKE=${ID_LIKE:-none})."
-fi
-log_ok "Host identified as ${NAME:-Arch Linux} (${ID:-arch})"
-
-# 2. Package Manager & AUR Helper Detection
-log_info "Detecting AUR helper..."
+# -----------------------------------------------------------------------------
+# 2. AUR helper
+# -----------------------------------------------------------------------------
 AUR_HELPER=""
-if command -v paru >/dev/null 2>&1; then
-    AUR_HELPER="paru"
-elif command -v yay >/dev/null 2>&1; then
-    AUR_HELPER="yay"
-else
-    log_warn "Neither 'paru' nor 'yay' found. Zenith will install yay automatically."
+if command -v paru >/dev/null 2>&1; then AUR_HELPER="paru"
+elif command -v yay >/dev/null 2>&1; then AUR_HELPER="yay"
 fi
 
 install_yay() {
-    log_info "Bootstrapping yay AUR helper..."
+    log_info "Bootstrapping yay..."
     sudo pacman -S --needed --noconfirm base-devel git
-    local tmp_dir
-    tmp_dir="$(mktemp -d)"
-    git clone https://aur.archlinux.org/yay-bin.git "$tmp_dir/yay-bin"
-    (cd "$tmp_dir/yay-bin" && makepkg -si --noconfirm)
-    rm -rf "$tmp_dir"
+    local tmp
+    tmp="$(mktemp -d)"
+    git clone https://aur.archlinux.org/yay-bin.git "$tmp/yay-bin"
+    (cd "$tmp/yay-bin" && makepkg -si --noconfirm)
+    rm -rf "$tmp"
     AUR_HELPER="yay"
-    log_ok "yay installed successfully."
 }
+[[ -n "$AUR_HELPER" ]] || install_yay
+log_ok "AUR helper: $AUR_HELPER"
 
-if [[ -z "$AUR_HELPER" ]]; then
-    install_yay
-fi
-log_ok "Using AUR helper: $AUR_HELPER"
-
-# 3. Core System & Mobile Phone Cable Sharing Dependencies
-log_info "Installing core system packages, Hyprland, and phone-cable sharing stack..."
-
-PACMAN_PACKAGES=(
-    # Compositor & Wayland core
-    hyprland hyprlock hypridle hyprpaper swww
+# -----------------------------------------------------------------------------
+# 3. Packages
+# -----------------------------------------------------------------------------
+PACKAGES=(
+    # Compositor and Wayland stack
+    hyprland hyprlock hypridle hyprpolkitagent
     xorg-xwayland wayland-protocols
+    xdg-desktop-portal-hyprland xdg-desktop-portal-gtk
 
-    # Default Applications
-    foot firefox thunar
+    # Desktop essentials
+    foot firefox thunar gvfs gvfs-mtp gvfs-gphoto2 thunar-volman tumbler
+    thunar-archive-plugin android-udev
 
-    # Phone Cable Sharing & Mobile Integration Stack
-    # Core Android MTP stack
-    gvfs gvfs-mtp gvfs-gphoto2 android-udev
-    thunar-volman tumbler thunar-archive-plugin
+    # Shell, launcher, clipboard, capture
+    rofi-wayland cliphist wl-clipboard grim slurp swappy wf-recorder
+    swww jq imagemagick libnotify fastfetch ffmpeg
+    qt6-5compat qt6-svg
 
-    # Shell, Menus & Clipboard
-    rofi-wayland cliphist wl-clipboard
-    grim slurp swappy jq libnotify fastfetch
-    hyprpolkitagent
-
-    # Audio & Hardware
+    # Audio, network, hardware
     pipewire pipewire-pulse wireplumber playerctl
-    bluez bluez-utils networkmanager brightnessctl
+    bluez bluez-utils networkmanager upower
+    brightnessctl pciutils wireless_tools curl polkit
 
-    # C / Rust Build Toolchain & Libraries
-    base-devel rust cargo gcc make pkg-config
-    gtk4 cairo glib2 json-c imagemagick
+    # Build toolchain
+    base-devel rust cargo gcc make pkg-config lua git
 
     # Fonts
     ttf-jetbrains-mono-nerd ttf-font-awesome noto-fonts-emoji
 
-    # Display Manager (login screen on boot)
-    sddm
-
-    # Logout screen & OCR
-    tesseract tesseract-data-eng
+    # Display manager and OCR
+    sddm tesseract tesseract-data-eng
 )
 
 AUR_PACKAGES=(
-    # Quickshell Wayland layer-shell engine
     quickshell
-    # VSCodium
+)
+AUR_OPTIONAL=(
     vscodium-bin
-    # Icon theme used by rofi app launcher
     tela-circle-icon-theme-dracula
 )
 
-log_info "Installing official repository packages..."
-sudo pacman -S --needed --noconfirm "${PACMAN_PACKAGES[@]}"
-
-# Optional Apple iOS stack (non-fatal if pacman encounters issues or user is pure Android)
-OPTIONAL_IOS_PACKAGES=(gvfs-afc usbmuxd libimobiledevice)
-log_info "Attempting to install optional iOS sharing stack (will skip safely if unavailable)..."
-sudo pacman -S --needed --noconfirm "${OPTIONAL_IOS_PACKAGES[@]}" 2>/dev/null || log_warn "iOS sharing packages skipped or unavailable (Android MTP remains fully operational)."
+log_info "Installing repository packages..."
+sudo pacman -S --needed --noconfirm "${PACKAGES[@]}"
 
 log_info "Installing AUR packages..."
 "$AUR_HELPER" -S --needed --noconfirm "${AUR_PACKAGES[@]}"
 
-# 4. Service Activation (Phone cable sharing, Bluetooth, Network)
-log_info "Configuring system services and socket activation..."
+log_info "Installing optional desktop extras..."
+for pkg in "${AUR_OPTIONAL[@]}"; do
+    "$AUR_HELPER" -S --needed --noconfirm "$pkg" \
+        || log_warn "$pkg unavailable; its integration stays optional."
+done
+
+log_info "Installing optional video-wallpaper backend (mpvpaper)..."
+"$AUR_HELPER" -S --needed --noconfirm mpvpaper 2>/dev/null \
+    || log_warn "mpvpaper unavailable; animated video wallpapers stay disabled."
+
+# -----------------------------------------------------------------------------
+# 4. Services
+# -----------------------------------------------------------------------------
+log_info "Enabling system services..."
 sudo systemctl enable --now NetworkManager.service
 sudo systemctl enable --now bluetooth.service
-
-# Socket-activate usbmuxd if installed (zero RAM when no iPhone is plugged in)
-if systemctl list-unit-files usbmuxd.socket >/dev/null 2>&1; then
-    sudo systemctl enable usbmuxd.socket 2>/dev/null || true
-    sudo systemctl start usbmuxd.socket 2>/dev/null || true
+if [[ -d /sys/firmware/efi ]]; then
+    if systemctl list-unit-files sddm.service >/dev/null 2>&1; then
+        sudo systemctl enable sddm.service
+    fi
 fi
 
-log_ok "Services configured."
-
-# Enable SDDM display manager (gives login screen on every boot)
-log_info "Enabling SDDM display manager..."
-sudo systemctl enable sddm.service
-# Register Hyprland as a Wayland session for SDDM if not already present
-if [[ ! -f /usr/share/wayland-sessions/hyprland.desktop ]]; then
-    sudo mkdir -p /usr/share/wayland-sessions
-    sudo tee /usr/share/wayland-sessions/hyprland.desktop > /dev/null << 'DESKTOP'
-[Desktop Entry]
-Name=Hyprland
-Comment=Hyprland Wayland Compositor
-Exec=start-hyprland
-Type=Application
-DESKTOP
-fi
-log_ok "SDDM enabled — system will show a login screen after every reboot."
-
-# 5. Build Native C & Rust Subsystems
-log_info "Building Zenith native C & Rust components..."
+# -----------------------------------------------------------------------------
+# 5. Native builds
+# -----------------------------------------------------------------------------
+log_info "Building native components..."
 mkdir -p "$ROOT_DIR/build"
 
-# 5.1 Compile 0ms C Dispatcher (zenith-ctl)
-log_info "Compiling zenith-ctl (0ms PID toggle dispatcher)..."
+log_info "  • zenith-ctl (C toggle dispatcher)"
 gcc -O3 -Wall -Wextra "$ROOT_DIR/native/zenith-ctl.c" -o "$ROOT_DIR/build/zenith-ctl"
 chmod +x "$ROOT_DIR/build/zenith-ctl"
-log_ok "zenith-ctl compiled successfully."
 
-# 5.2 Compile C Cinematic Wallpaper Gallery
-log_info "Compiling wallpaper gallery..."
-if [[ -f "$ROOT_DIR/native/gallery.c" ]]; then
-    gcc -O3 -Wall -Wextra "$ROOT_DIR/native/gallery.c" \
-        $(pkg-config --cflags --libs gtk4 cairo json-c) \
-        -lm -o "$ROOT_DIR/build/gallery"
-    chmod +x "$ROOT_DIR/build/gallery"
-    log_ok "gallery compiled successfully."
-fi
+log_info "  • zenith-native (Rust wallpaper/theme engine)"
+(cd "$ROOT_DIR/native" && cargo build --release)
+cp -f "$ROOT_DIR/native/target/release/zenith-native" "$ROOT_DIR/build/zenith-native"
+chmod +x "$ROOT_DIR/build/zenith-native"
+log_ok "Native components ready."
 
-# 5.3 Compile Rust Native Helper (zenith-native)
-if [[ -f "$ROOT_DIR/native/Cargo.toml" ]]; then
-    log_info "Compiling zenith-native (Rust geometry & theme engine)..."
-    (cd "$ROOT_DIR/native" && cargo build --release)
-    cp -f "$ROOT_DIR/native/target/release/zenith-native" "$ROOT_DIR/build/zenith-native"
-    chmod +x "$ROOT_DIR/build/zenith-native"
-    log_ok "zenith-native compiled successfully."
-fi
-
-# 6. User Config Directory Deployment
-log_info "Deploying Zenith user configuration..."
+# -----------------------------------------------------------------------------
+# 6. User configuration
+# -----------------------------------------------------------------------------
 CONFIG_HOME="${XDG_CONFIG_HOME:-$HOME/.config}"
-mkdir -p "$CONFIG_HOME/hypr" "$CONFIG_HOME/foot" "$CONFIG_HOME/zenith"
-
-# Backup existing hyprland config if present
-if [[ -f "$CONFIG_HOME/hypr/hyprland.conf" || -f "$CONFIG_HOME/hypr/hyprland.lua" ]]; then
-    backup_date="$(date +%Y%m%d_%H%M%S)"
-    log_warn "Backing up existing Hyprland config to $CONFIG_HOME/hypr.backup.$backup_date"
-    mv "$CONFIG_HOME/hypr" "$CONFIG_HOME/hypr.backup.$backup_date"
-    mkdir -p "$CONFIG_HOME/hypr"
-fi
-
-# Write ZENITH_ROOT so paths.lua always resolves the correct repo root
-mkdir -p "$CONFIG_HOME/zenith"
-printf '%s\n' "$ROOT_DIR" > "$CONFIG_HOME/zenith/root"
-log_ok "ZENITH_ROOT written to $CONFIG_HOME/zenith/root -> $ROOT_DIR"
-
-# Symlink or Copy Hyprland Lua modules
-cp -rf "$ROOT_DIR/hypr/"* "$CONFIG_HOME/hypr/"
-log_ok "Hyprland Lua modules deployed to $CONFIG_HOME/hypr/"
-
-# User scripts — make all scripts in scripts/ executable
-chmod +x "$ROOT_DIR/scripts/"*.sh
-
-# hypridle + hyprlock configs
-ln -sf "$ROOT_DIR/hypr/hyprlock.conf"  "$HOME/.config/hypr/hyprlock.conf"
-ln -sf "$ROOT_DIR/hypr/hypridle.conf"  "$HOME/.config/hypr/hypridle.conf"
-
-# Avatar placeholder (user replaces with their own)
-AVATAR_DIR="$HOME/.config/zenith/assets"
-mkdir -p "$AVATAR_DIR"
-[ -f "$AVATAR_DIR/avatar.png" ] || cp "$ROOT_DIR/assets/avatar.png" "$AVATAR_DIR/avatar.png" 2>/dev/null || \
-  magick -size 84x84 xc:'#59b9e8' -fill white -font JetBrainsMono-NF -pointsize 36 \
-  -gravity center -annotate 0 'Z' "$AVATAR_DIR/avatar.png" 2>/dev/null || true
-
-# Foot configuration
-mkdir -p "$CONFIG_HOME/foot"
-if [[ -f "$ROOT_DIR/foot/foot.ini" ]]; then
-    cp -f "$ROOT_DIR/foot/foot.ini" "$CONFIG_HOME/foot/foot.ini"
-fi
-
-# Deploy Fastfetch & Minimal Arrow Prompt
-mkdir -p "$CONFIG_HOME/zenith/fastfetch"
-cp -rf "$ROOT_DIR/fastfetch/"* "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
-
-# Pre-populate theme override and state so rofi & quickshell parse cleanly on first launch
 CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
 STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
-mkdir -p "$CACHE_HOME/zenith" "$STATE_HOME/zenith" "$CONFIG_HOME/foot"
-touch "$CACHE_HOME/zenith/theme-override.rasi"
+DATA_HOME="${XDG_DATA_HOME:-$HOME/.local/share}"
 
-# Copy default foot colors into place
-if [[ -f "$ROOT_DIR/foot/colors.ini" && ! -f "$CONFIG_HOME/foot/colors.ini" ]]; then
-    cp -f "$ROOT_DIR/foot/colors.ini" "$CONFIG_HOME/foot/colors.ini"
+mkdir -p "$CONFIG_HOME/hypr" "$CONFIG_HOME/foot" "$CONFIG_HOME/zenith" \
+    "$CACHE_HOME/zenith" "$STATE_HOME/zenith" "$DATA_HOME/zenith"
+
+printf '%s\n' "$ROOT_DIR" > "$CONFIG_HOME/zenith/root"
+
+if [[ -f "$CONFIG_HOME/hypr/hyprland.lua" ]]; then
+    backup="$CONFIG_HOME/hypr/backup-$(date +%Y%m%d-%H%M%S)"
+    mkdir -p "$backup"
+    cp -f "$CONFIG_HOME/hypr/hyprland.lua" "$backup/" 2>/dev/null || true
+    log_warn "Existing Hyprland config backed up to $backup (Zenith modules are deployed)."
+fi
+cp -rf "$ROOT_DIR/hypr/." "$CONFIG_HOME/hypr/"
+# Hyprlock does not consistently expand $HOME inside path/cmd values.
+sed -i "s|\$HOME|$HOME|g" "$CONFIG_HOME/hypr/hyprlock.conf"
+if [[ ! -f "$CONFIG_HOME/zenith/settings.json" ]]; then
+    bash "$ROOT_DIR/scripts/shortcutctl.sh" apply >/dev/null 2>&1 \
+        || log_warn "Managed shortcuts were not generated; Super + W still opens the picker."
+fi
+log_ok "Hyprland Lua modules deployed."
+
+# Scripts and assets are referenced by absolute path from Hyprland/QML.
+rm -rf "$CONFIG_HOME/zenith/scripts" "$CONFIG_HOME/zenith/assets"
+ln -s "$ROOT_DIR/scripts" "$CONFIG_HOME/zenith/scripts"
+ln -s "$ROOT_DIR/assets" "$CONFIG_HOME/zenith/assets"
+chmod +x "$ROOT_DIR/scripts/"*.sh
+
+# Terminal, prompt and fastfetch
+[[ -f "$ROOT_DIR/foot/foot.ini" ]] && cp -f "$ROOT_DIR/foot/foot.ini" "$CONFIG_HOME/foot/foot.ini"
+mkdir -p "$CONFIG_HOME/zenith/fastfetch"
+cp -rf "$ROOT_DIR/fastfetch/." "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
+# fastfetch reads ~/.config/fastfetch; point it at the Zenith copy so the
+# zen logo + config actually load. If the user already has a real fastfetch
+# config directory, leave it alone and say so.
+if [[ -L "$CONFIG_HOME/fastfetch" ]]; then
+    ln -sfn "$CONFIG_HOME/zenith/fastfetch" "$CONFIG_HOME/fastfetch"
+elif [[ -d "$CONFIG_HOME/fastfetch" ]]; then
+    if [[ ! -f "$CONFIG_HOME/fastfetch/config.jsonc" ]]; then
+        cp -rf "$ROOT_DIR/fastfetch/." "$CONFIG_HOME/fastfetch/" 2>/dev/null || true
+    else
+        log_warn "Found your own ~/.config/fastfetch config; Zenith's fastfetch theme was NOT applied."
+    fi
+else
+    ln -sfn "$CONFIG_HOME/zenith/fastfetch" "$CONFIG_HOME/fastfetch"
 fi
 
-# Deploy default palette
+# Avatar placeholder for hyprlock
+AVATAR="$CONFIG_HOME/zenith/assets/avatar.png"
+if [[ ! -s "$AVATAR" ]]; then
+    magick -size 200x200 xc:'#a899e6' -fill '#1b1226' -font DejaVu-Sans-Bold \
+        -pointsize 96 -gravity center -annotate 0 'Z' "$AVATAR" 2>/dev/null \
+        || magick -size 200x200 xc:'#a899e6' "$AVATAR"
+fi
+
+# -----------------------------------------------------------------------------
+# 7. Defaults: palette, settings, theme consumers
+# -----------------------------------------------------------------------------
 if [[ -f "$ROOT_DIR/generated/palette.json" ]]; then
     cp -f "$ROOT_DIR/generated/palette.json" "$STATE_HOME/zenith/palette.json"
 fi
+# Consumers (rofi/hyprland/foot) are refreshed natively on first launch.
 
-# Ensure default settings are seeded on first install so Island is never dormant/hidden by default
-if [[ ! -f "$STATE_HOME/zenith/settings.json" ]]; then
-    cat << 'EOF' > "$STATE_HOME/zenith/settings.json"
+if [[ ! -f "$CONFIG_HOME/zenith/settings.json" ]]; then
+    cat > "$CONFIG_HOME/zenith/settings.json" <<'JSON'
 {
   "appearance": {
     "mode": "dark",
     "material": "solid",
     "surfaceOpacity": 0.96,
     "islandStyle": "floating",
-    "wallpaperPaletteEnabled": true
+    "wallpaperPaletteEnabled": true,
+    "themeSourceMode": "wallpaper"
   },
   "island": {
     "topMargin": 5,
@@ -282,95 +238,49 @@ if [[ ! -f "$STATE_HOME/zenith/settings.json" ]]; then
   "displays": {
     "islandPolicy": "all",
     "primaryMonitor": "auto"
+  },
+  "shortcuts": {
+    "managed": true
   }
 }
-EOF
+JSON
 fi
 
-# Pre-generate 1:1 wallpaper crops and cache if wallpapers exist and binaries are built
-if [[ -x "$ROOT_DIR/build/zenith-native" ]]; then
-    log_info "Bootstrapping initial wallpaper, blur cache, and color palette..."
-    INIT_WALL="$(find "$ROOT_DIR/wallpapers" -type f \( -name "*.png" -o -name "*.jpg" -o -name "*.jpeg" \) 2>/dev/null | head -1 || true)"
-    if [[ -n "$INIT_WALL" && -r "$INIT_WALL" ]]; then
-        printf '%s\n' "$INIT_WALL" > "$STATE_HOME/zenith/current_wallpaper"
-        "$ROOT_DIR/build/zenith-native" align 2>/dev/null || true
-        "$ROOT_DIR/build/zenith-native" theme 2>/dev/null || true
-        log_ok "Initial wallpaper theme & crops generated."
-    fi
+touch "$CACHE_HOME/zenith/theme-override.rasi"
+
+if [[ -n "${WAYLAND_DISPLAY:-}" && -x "$ROOT_DIR/build/zenith-native" ]]; then
+    log_info "Applying the initial wallpaper and palette..."
+    "$ROOT_DIR/build/zenith-native" wallpaper ensure >/dev/null 2>&1 \
+        || log_warn "Wallpaper bootstrap skipped; choose one from the picker (Super + W)."
 fi
 
+# -----------------------------------------------------------------------------
+# 8. Shell prompt
+# -----------------------------------------------------------------------------
 if [[ -f "$HOME/.bashrc" ]] && ! grep -q "zenith/scripts/prompt.sh" "$HOME/.bashrc"; then
-    printf '\n# Project Zenith Minimal Arrow Prompt\n[ -f "%s/scripts/prompt.sh" ] && source "%s/scripts/prompt.sh"\n' "$ROOT_DIR" "$ROOT_DIR" >> "$HOME/.bashrc"
+    printf '\n# Project Zenith prompt\n[ -f "%s/scripts/prompt.sh" ] && source "%s/scripts/prompt.sh"\n' \
+        "$ROOT_DIR" "$ROOT_DIR" >> "$HOME/.bashrc"
 fi
 
-# 7. Hyprland Auto-Start Configuration (Auto-launch from TTY1)
-log_info "Configuring automatic Hyprland startup from TTY..."
-
-# Determine optimal launcher binary (start-hyprland wrapper initializes environment & systemd)
-LAUNCH_CMD="Hyprland"
-if command -v start-hyprland >/dev/null 2>&1; then
-    LAUNCH_CMD="start-hyprland"
-fi
-
-TTY_HYPRLAND_SNIPPET='
-# Auto-start Hyprland on TTY1 login if not already in graphical session
-if [ -z "$DISPLAY" ] && [ "$XDG_VTNR" = 1 ] && [ -z "$WAYLAND_DISPLAY" ]; then
-    if command -v start-hyprland >/dev/null 2>&1; then
-        exec start-hyprland
-    else
-        exec Hyprland
-    fi
-fi'
-
-# Configure user profile scripts (~/.bash_profile or ~/.profile or ~/.zprofile)
-TARGET_PROFILE=""
-if [[ -f "$HOME/.bash_profile" ]]; then
-    TARGET_PROFILE="$HOME/.bash_profile"
-elif [[ -f "$HOME/.zprofile" ]]; then
-    TARGET_PROFILE="$HOME/.zprofile"
-elif [[ -f "$HOME/.profile" ]]; then
-    TARGET_PROFILE="$HOME/.profile"
-else
-    TARGET_PROFILE="$HOME/.bash_profile"
-    touch "$TARGET_PROFILE"
-fi
-
-if ! grep -q "start-hyprland" "$TARGET_PROFILE" 2>/dev/null && ! grep -q "exec Hyprland" "$TARGET_PROFILE" 2>/dev/null; then
-    printf "\n%s\n" "$TTY_HYPRLAND_SNIPPET" >> "$TARGET_PROFILE"
-    log_ok "Configured Hyprland auto-start in $TARGET_PROFILE"
-fi
-
-# If using ~/.bashrc in login shell environments, ensure profile is sourced or checked
-if [[ -f "$HOME/.bashrc" ]] && ! grep -q "start-hyprland" "$HOME/.bashrc" && ! grep -q "exec Hyprland" "$HOME/.bashrc"; then
-    # Add non-intrusive TTY1 autostart check
-    printf "\n# Auto-start Hyprland on TTY1 login\nif [[ -z \"\$DISPLAY\" ]] && [[ \"\$(tty 2>/dev/null)\" == \"/dev/tty1\" ]] && [[ -z \"\$WAYLAND_DISPLAY\" ]]; then\n    if command -v start-hyprland >/dev/null 2>&1; then\n        exec start-hyprland\n    else\n        exec Hyprland\n    fi\nfi\n" >> "$HOME/.bashrc"
-fi
-
-# Enable Foot server user service for sub-millisecond terminal launches
-systemctl --user enable --now foot-server.service 2>/dev/null || true
+# -----------------------------------------------------------------------------
+# 9. Verification
+# -----------------------------------------------------------------------------
+log_info "Verifying installation..."
+bash "$ROOT_DIR/scripts/check.sh" || log_warn "Verification reported missing runtime tools."
 
 printf "\n%b" "$bold$green"
 cat << "EOF"
   ======================================================
-     PROJECT ZENITH INSTALLATION COMPLETED SUCCESSFULLY!
+     PROJECT ZENITH INSTALLATION COMPLETE
   ======================================================
 EOF
 printf "%b\n" "$reset"
-printf "  • Launch with: %b%s%b (or login on TTY1 to auto-launch)\n" "$bold$blue" "$LAUNCH_CMD" "$reset"
-printf "  • App Launcher: %bSUPER + A%b (0ms instant pop-in)\n" "$bold$green" "$reset"
-printf "  • Clipboard:    %bSUPER + C%b (Anchored top-right)\n" "$bold$green" "$reset"
-printf "  • Wallpaper:    %bSUPER + W%b (Cinematic Wallpaper Shower)\n" "$bold$green" "$reset"
-printf "  • Codium:       %bSUPER + O%b\n" "$bold$green" "$reset"
-printf "  • Phone Sharing:%bPlug in Android (MTP) to Thunar%b\n\n" "$bold$yellow" "$reset"
+printf "  • Start:      %bHyprland%b (or log out and pick Hyprland in SDDM)\n" "$bold$blue" "$reset"
+printf "  • Launcher:   %bSUPER + A%b\n" "$bold$green" "$reset"
+printf "  • Clipboard:  %bSUPER + V%b\n" "$bold$green" "$reset"
+printf "  • Wallpapers: %bSUPER + W%b (standalone picker)\n" "$bold$green" "$reset"
+printf "  • Settings:   %bSUPER + ,%b\n\n" "$bold$green" "$reset"
 
-# Ask or automatically transition to Hyprland if currently in a TTY session
-if [[ -z "${WAYLAND_DISPLAY:-}" && -z "${DISPLAY:-}" ]]; then
-    printf "%bZenith installation finished!%b Launching Hyprland now...\n" "$bold$green" "$reset"
-    read -r -t 5 -p "Starting in 5 seconds (Press Enter to start immediately, or Ctrl+C to stay in shell)... " || true
-    echo ""
-    if command -v start-hyprland >/dev/null 2>&1; then
-        exec start-hyprland
-    else
-        exec Hyprland
-    fi
+if [[ -z "${WAYLAND_DISPLAY:-}" ]]; then
+    log_info "Run 'Hyprland' (or log in through SDDM) to start Zenith."
 fi

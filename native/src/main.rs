@@ -1,18 +1,25 @@
 mod clipboard;
 mod config;
+mod palette;
 mod theme;
+mod thumbs;
 mod wallpaper;
 mod wallpaper_align;
 
 use config::*;
-use std::{env, path::PathBuf};
+use std::path::PathBuf;
 
 fn main() {
-    let args: Vec<String> = env::args().skip(1).collect();
+    let args: Vec<String> = std::env::args().skip(1).collect();
     if let Err(e) = dispatch(&args) {
         eprintln!("Zenith-Native Error: {e}");
         std::process::exit(1);
     }
+}
+
+fn flag(args: &[String], name: &str) -> Option<String> {
+    let index = args.iter().position(|a| a == name)?;
+    args.get(index + 1).cloned()
 }
 
 fn dispatch(args: &[String]) -> Result {
@@ -26,45 +33,79 @@ fn dispatch(args: &[String]) -> Result {
         "wallpaper" => {
             let sub = rest.first().map(String::as_str).unwrap_or("list");
             match sub {
-                "apply" => {
-                    let path = rest.get(1).ok_or("Expected wallpaper path")?;
-                    wallpaper::apply(&PathBuf::from(path))
-                }
-                "random" => wallpaper::apply_random(),
                 "list" => {
+                    for item in wallpaper::discover() {
+                        println!("{}", item.path.display());
+                    }
+                    Ok(())
+                }
+                "list-long" => {
                     for item in wallpaper::discover() {
                         println!("{}\t{}\t{}", item.category, item.stem, item.path.display());
                     }
                     Ok(())
                 }
+                "current" => {
+                    println!("{}", wallpaper::current());
+                    Ok(())
+                }
+                "set" | "apply" => {
+                    let path = rest.get(1).ok_or("Expected wallpaper path")?;
+                    let transition = flag(rest, "--transition").unwrap_or_else(|| "fade".into());
+                    let duration = flag(rest, "--duration").unwrap_or_else(|| "1.0".into());
+                    let monitor = flag(rest, "--monitor").unwrap_or_default();
+                    let reduced = rest.iter().any(|a| a == "--reduced-motion");
+                    wallpaper::set(&PathBuf::from(path), &transition, &duration, &monitor, reduced)
+                }
+                "random" => wallpaper::apply_random(),
+                "probe" => wallpaper::probe(),
+                "ensure" => wallpaper::ensure(),
+                "thumbs" => {
+                    let force = rest.iter().any(|a| a == "--force");
+                    wallpaper::thumbnails(force)
+                }
                 _ => Err(error(format!("Unknown wallpaper subcommand: {sub}"))),
             }
         }
         "align" => {
-            let current = text(&state().join("current_wallpaper"));
+            let current = wallpaper::current();
             if current.is_empty() {
                 wallpaper::apply_random()
             } else {
-                wallpaper_align::generate_alignment_crops(&PathBuf::from(current))
+                let visual = text(&state().join("current_wallpaper_image"));
+                let target = if visual.is_empty() {
+                    PathBuf::from(current)
+                } else {
+                    PathBuf::from(visual)
+                };
+                wallpaper_align::generate_alignment_crops(&target)
             }
         }
         "theme" => {
-            let current = text(&state().join("current_wallpaper"));
-            if current.is_empty() {
-                wallpaper::apply_random()
-            } else {
-                theme::apply_theme(&PathBuf::from(current))
+            let sub = rest.first().map(String::as_str).unwrap_or("refresh");
+            match sub {
+                "refresh" => theme::refresh(),
+                "color" => {
+                    let color = rest.get(1).ok_or("Expected a #rrggbb colour")?;
+                    theme::from_color(color)
+                }
+                _ => Err(error(format!("Unknown theme subcommand: {sub}"))),
             }
         }
         "help" | "--help" | "-h" => {
-            println!("Zenith Native Geometry & Theme Engine\n");
+            println!("Zenith Native Engine\n");
             println!("Usage: zenith-native <subcommand> [args]\n");
             println!("Subcommands:");
-            println!("  wallpaper apply <path>  Apply wallpaper with grow transition, theme & 1:1 crops");
-            println!("  wallpaper random        Select and apply a random wallpaper");
-            println!("  wallpaper list          List all discovered wallpapers and categories");
-            println!("  align                   Regenerate 1:1 pixel crops for current monitor");
-            println!("  theme                   Regenerate theme palette from current wallpaper");
+            println!("  wallpaper list                  List discovered wallpapers (absolute paths)");
+            println!("  wallpaper list-long             List wallpapers as category<TAB>name<TAB>path");
+            println!("  wallpaper set <path> [--transition T] [--duration S] [--monitor M] [--reduced-motion]");
+            println!("  wallpaper random                Apply a random wallpaper");
+            println!("  wallpaper ensure                Re-apply the last wallpaper (or pick one)");
+            println!("  wallpaper probe                 Report swww daemon availability");
+            println!("  wallpaper current               Print the active wallpaper path");
+            println!("  wallpaper thumbs [--force]      Generate picker thumbnails");
+            println!("  theme [refresh|color <#hex>]    Regenerate or override the palette");
+            println!("  align                           Regenerate launcher/clipboard crops");
             Ok(())
         }
         _ => Err(error(format!("Unknown command: {cmd}"))),

@@ -19,8 +19,9 @@ local home = env("HOME", "")
 local root_file = home .. "/.config/zenith/root"
 local rf = io.open(root_file, "r")
 if rf then
-    M.root = rf:read("*l"):gsub("%s+$", "")
+    M.root = (rf:read("*l") or ""):gsub("%s+$", "")
     rf:close()
+    if M.root == "" then M.root = home .. "/zenith" end
 else
     -- Fallback: derive from this file's resolved path
     local file = debug.getinfo(1, "S").source:sub(2)

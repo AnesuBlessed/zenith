@@ -4,6 +4,7 @@ import "../core"
 Rectangle {
     id: root
     property alias text: label.text
+    property alias labelFontFamily: label.font.family
     property bool compact: false
     property bool showFocusIndicator: true
     property bool showBorder: true

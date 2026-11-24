@@ -17,17 +17,10 @@ Item {
     signal cancelRequested()
 
     function activateImage(image): void {
-        if (!selectionMode) {
-            WallpaperService.applyWallpaper(image.path, monitorName)
-            return
-        }
+        // This page is now only the identity-image chooser. Wallpaper browsing
+        // lives in the standalone picker launched from `SUPER + W`.
         if (IdentityService.setPersonalImage(image.source))
             selectionCompleted()
-    }
-
-    onVisibleChanged: {
-        if (visible && !selectionMode && Config.wallpaper.refreshOnOpen)
-            WallpaperService.refresh()
     }
 
     Connections {

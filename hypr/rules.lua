@@ -17,17 +17,6 @@ hl.window_rule({
     center = true,
 })
 
--- Wallpaper Shower Gallery (Cinematic Widescreen Window)
-hl.window_rule({
-    name  = "wallpaper_gallery",
-    match = {
-        class = "^(org\\.zenith\\.gallery)$",
-    },
-    float  = true,
-    center = true,
-    size   = "1280 780",
-})
-
 -- Picture-in-Picture Video
 hl.window_rule({
     name  = "picture_in_picture",

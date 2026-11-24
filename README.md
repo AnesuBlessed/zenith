@@ -1,91 +1,110 @@
 # 🌌 Project Zenith
 
-> **The Zero-Bloat, Event-Driven, Hardware-Aware Hyprland Desktop Environment**  
-> Powered by Quickshell Dynamic Island, Dual-Pane Rofi, Native C/Rust Geometry Engine, and the Cinematic Wallpaper Shower.
+> **The Zero-Bloat, Event-Driven, Hardware-Aware Hyprland Desktop Environment**
+> Quickshell Dynamic Island · native Rust wallpaper/theme engine · standalone QML wallpaper picker · Zero Python.
 
 ---
 
-## ⚡ Core Philosophy & Standards
+## ⚡ Core Philosophy
 
-1. **Sub-Millisecond Responsiveness (0ms Perceived Latency):**  
-   Hot-path application and clipboard launches bypass bash/subshell forks via `zenith-ctl` (compiled C PID dispatcher) directly mapping to the next monitor VBlank.
-2. **True Zero-Idle Overhead:**  
-   Variable Frame Rate (`vfr = true`) draws **0 FPS** when the screen is static. Client-server terminal pooling (`foot --server`) keeps terminal RAM under 3 MB per instance.
-3. **Cinematic Wallpaper Shower:**  
-   A widescreen 70/30 gallery combining a massive high-res hero preview on top with an interactive 16:9 filmstrip dock along the bottom.
-4. **Mathematical 1:1 Wallpaper Alignment:**  
-   Pixel-accurate wallpaper cropping engine written in Rust compensating for viewport scale, monitor offsets, and Rofi dimensions with **0-subpixel drift**.
-5. **Universal Portability:**  
-   Seamless support for Arch Linux, EndeavourOS, CachyOS, Manjaro, Garuda, and ArcoLinux.
-6. **Strict Zero-Python Standard:**  
-   100% compiled C, Rust, and POSIX shell. No Python runtime dependencies.
+1. **One implementation per action.** Wallpaper changes, palette generation, launcher crops and theme consumers are owned by `zenith-native` (Rust). QML never shells out to ad-hoc helpers for theming.
+2. **Sub-millisecond hot paths.** `zenith-ctl` (C) toggles rofi and the picker by PID, without bash/pgrep cascades.
+3. **True zero idle overhead.** Quickshell only redraws on events; `foot --server` keeps terminals cheap.
+4. **Universal portability.** Arch Linux, EndeavourOS, CachyOS, Manjaro, Garuda, ArcoLinux.
+5. **Strict Zero-Python standard.** Compiled C + Rust + POSIX shell + QML only.
 
 ---
 
-## ⌨️ Conflict-Free Keybindings
+## ⌨️ Keybindings (defaults)
 
-| Key Combination | Action | Subsystem |
-| :--- | :--- | :--- |
-| `SUPER + T` | Terminal | `footclient` (instant sub-2ms launch) |
-| `SUPER + A` | Application Launcher | 0ms Dual-Pane Rofi |
-| `SUPER + Tab` | Window Switcher | Rofi Window Selector |
-| `SUPER + C` | Clipboard Manager | Anchored Top-Right Rofi |
-| `SUPER + SHIFT + C`| Wipe Clipboard History | `cliphist wipe` |
-| `SUPER + E` | File Manager | `thunar` (with Android MTP & iPhone AFC sharing) |
-| `SUPER + B` | Web Browser | `firefox` |
-| `SUPER + O` | Code Editor | `codium` / `code` |
-| `SUPER + W` | Wallpaper Shower | Cinematic Widescreen Gallery (`gallery.c`) |
-| `SUPER + SHIFT + W`| Random Wallpaper | `zenith-native wallpaper random` |
-| `SUPER + N` | Island Control Center | Dynamic Island Hardware Panel (WiFi / Bluetooth) |
-| `SUPER + Q` | Close Window | Hyprland Dispatcher |
-| `SUPER + M` | Fullscreen Toggle | Hyprland Dispatcher |
-| `SUPER + SHIFT + F`| Floating Mode Toggle | Hyprland Dispatcher |
-| `SUPER + [1-9]` | Switch Workspace | Hyprland Workspaces 1–9 |
-| `SUPER + BackSpace`| Pocket Dimension | Special Scratchpad Workspace |
-| `SUPER + L` | Lock Screen | `hyprlock` |
-| `SUPER + Escape` | Power Menu | Island Session Screen |
-| `Print` | Region Screenshot | `grim` + `slurp` -> Clipboard |
-| `SHIFT + Print` | Annotate Screenshot | `grim` + `slurp` -> `swappy` |
-| `SUPER + SHIFT + O`| Region OCR | `grim` + `tesseract` -> Clipboard |
+| Keys | Action |
+| :--- | :--- |
+| `SUPER + T` | Terminal (`foot`) |
+| `SUPER + A` | Application launcher (rofi) |
+| `SUPER + Tab` | Window switcher (rofi) |
+| `SUPER + V` | Clipboard history (rofi) |
+| `SUPER + SHIFT + C` | Wipe clipboard history |
+| `SUPER + W` | Wallpaper picker (standalone Quickshell) |
+| `SUPER + SHIFT + W` | Random wallpaper |
+| `SUPER + N` | Island control center |
+| `SUPER + SHIFT + N` | Notifications |
+| `SUPER + Space` | Island control center (alias) |
+| `SUPER + ,` | Zenith settings |
+| `SUPER + E` / `B` / `O` | Thunar / Firefox / Codium |
+| `SUPER + Q` | Close window |
+| `SUPER + M` | Fullscreen toggle |
+| `SUPER + SHIFT + F` | Floating toggle |
+| `SUPER + [1-9]` | Workspaces 1–9 |
+| `SUPER + BackSpace` | Scratchpad workspace |
+| `SUPER + ALT + L` | Lock (`hyprlock`) |
+| `SUPER + Escape` | Session overlay |
+| `SUPER + SHIFT + S` | Region screenshot (Island flow) |
+| `SUPER + SHIFT + R` | Region recording (`wf-recorder`) |
+| `Print` | Region screenshot → clipboard |
+| `SHIFT + Print` | Region screenshot → `swappy` |
+| `SUPER + SHIFT + O` | Region OCR → clipboard |
+
+Shortcuts marked "managed" in **Settings → Shortcuts** are written to
+`~/.config/hypr/shortcuts.lua`, which `keybinds.lua` loads with `pcall(require, "shortcuts")`.
 
 ---
 
-## 🛠️ Directory Structure
+## 🛠️ Directory layout
 
 ```
 zenith/
-├── hypr/               # Modular Hyprland Lua Configuration (Single Responsibility)
-│   ├── hyprland.lua    # Master loader & cache invalidator
-│   ├── paths.lua       # Filesystem & XDG path resolution
-│   ├── monitors.lua    # Hardware-agnostic monitor setup
-│   ├── hardware.lua    # Input gestures, touchpad, mouse speed
-│   ├── autostart.lua   # Daemons & background services
-│   ├── looknfeel.lua   # VFR, VRR, explicit sync, direct scanout, 2-pass blur
-│   ├── keybinds.lua    # Deduplicated keybindings matrix
-│   ├── rules.lua       # 0ms layer rules & floating window rules
-│   └── colors.lua      # Dynamic palette variables
-├── native/             # Compiled C & Rust Subsystems (Zero Python)
-│   ├── Cargo.toml      # Optimized LTO Rust build configuration
-│   ├── zenith-ctl.c    # Sub-millisecond C toggle dispatcher
-│   ├── gallery.c       # Cinematic 70/30 wallpaper gallery
-│   └── src/            # Rust source: geometry, theme, wallpaper, clipboard
-├── island/             # Quickshell Dynamic Island (Decoupled, zero launcher/clipboard)
-├── services/           # Quickshell Network & Bluetooth singletons
-├── rofi/               # Wallpaper-aligned Dual-Pane Launcher & Clipboard
-├── foot/               # Ultra-low latency terminal configuration
-├── wallpapers/         # Curated wallpaper collections
-├── scripts/            # Check & utility scripts
-├── install.sh          # Universal Arch/Derivative Installer
-└── PLAN.md             # Complete architectural specification & Spiral Model
+├── hypr/                 # Modular Hyprland Lua config (+ generated colors.lua)
+├── native/               # Rust engine and C dispatcher
+│   ├── zenith-ctl.c      # PID toggle dispatcher (launcher, clipboard, picker, window)
+│   └── src/              # main.rs, wallpaper.rs, palette.rs, theme.rs, thumbs.rs, …
+├── picker/               # Standalone Quickshell wallpaper picker (hyprquickpaper layout port)
+│   ├── shell.qml         # Loads layouts/<active_layout> from config.json
+│   ├── layouts/          # 14 picker layouts, themed through theme/Zn.qml
+│   └── theme/Zn.qml      # Palette bridge + native backend calls
+├── island/               # Quickshell Dynamic Island
+├── services/             # Quickshell service singletons (audio, network, wallpaper, …)
+├── rofi/                 # Wallpaper-aligned launcher, clipboard and selector themes
+├── foot/                 # Terminal configuration
+├── wallpapers/           # Curated wallpaper collections
+├── scripts/              # Capture, clipboard, idle, session, shortcut and theme helpers
+├── install.sh            # Arch installer
+└── scripts/check.sh      # Post-install verification
 ```
 
 ---
 
 ## 🚀 Installation
 
-Run the idempotent installer on any Arch-based distribution:
-
 ```bash
+git clone <this repository>
+cd zenith
 chmod +x install.sh
 ./install.sh
 ```
+
+The installer:
+
+1. verifies Arch/derivative and installs the runtime packages (`swww`, `wf-recorder`,
+   `grim`/`slurp`, `cliphist`/`wl-clipboard`, `rofi-wayland`, `quickshell`, `hyprlock`,
+   `hypridle`, `imagemagick`, `jq`, fonts, …), plus optional `mpvpaper`;
+2. builds `build/zenith-ctl` (C) and `build/zenith-native` (Rust);
+3. deploys the Hyprland Lua modules, scripts, foot config and a default palette/settings;
+4. bootstraps the wallpaper + palette transaction when run inside Wayland;
+5. runs `scripts/check.sh` and prints the first steps.
+
+Start Hyprland (or pick the session in SDDM). Wallpapers live in any of:
+`<repo>/wallpapers`, `$XDG_DATA_HOME/zenith/wallpapers`, `~/Pictures/Wallpapers`,
+`~/Pictures/wallpapers` and `~/Pictures`.
+
+---
+
+## 🖼️ Wallpaper picker
+
+`SUPER + W` launches `picker/` through `zenith-ctl toggle picker` (`quickshell -p <repo>/picker`).
+The picker is a pure QML port of the hyprquickpaper layouts: it reads the same
+`palette.json` as the Island, renders thumbnails generated by the Rust `image` crate
+(`zenith-native wallpaper thumbs`), and applies selections through
+`zenith-native wallpaper set`, which updates swww, the Material palette, Hyprland colours,
+foot/rofi consumers, launcher crops and the state file in one transaction.
+
+Video wallpapers are routed to `mpvpaper` when installed.

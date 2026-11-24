@@ -1,5 +1,6 @@
 import QtQuick
 import QtQuick.Layouts
+import Quickshell
 import "../core"
 import "../services"
 
@@ -91,7 +92,16 @@ RowLayout {
             }
 
             HoverHandler { id: quickHover }
-            TapHandler { onTapped: root.pageRequested(modelData.page) }
+            TapHandler {
+                onTapped: {
+                    if (modelData.page === "wallpaper") {
+                        Quickshell.execDetached([Quickshell.shellDir
+                            + "/build/zenith-ctl", "toggle", "picker"])
+                    } else {
+                        root.pageRequested(modelData.page)
+                    }
+                }
+            }
             Behavior on color { ColorAnimation { duration: Animations.fast } }
             Behavior on border.color { ColorAnimation { duration: Animations.fast } }
         }

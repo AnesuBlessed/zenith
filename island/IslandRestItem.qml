@@ -26,8 +26,11 @@ Item {
     Component {
         id: weatherComponent
         Item {
-            visible: Config.weather.enabled && WeatherService.available
-            implicitWidth: Math.round(14 * Config.island.restIconScale)
+            // Collapse to zero width when inactive so the resting row stays
+            // centered even while the slot exists.
+            property bool active: Config.weather.enabled && WeatherService.available
+            visible: active
+            implicitWidth: active ? Math.round(14 * Config.island.restIconScale) : 0
             implicitHeight: 20
             Text {
                 anchors.centerIn: parent

@@ -307,29 +307,6 @@ QtObject {
         readonly property int height: 440
     }
 
-    readonly property QtObject launcher: QtObject {
-        readonly property int width: root.island.expandedWidth
-        readonly property int height: 440
-        readonly property int resultLimit: 24
-    }
-
-    readonly property QtObject commandLauncher: QtObject {
-        readonly property string historySource: {
-            const candidate = SettingsStore.value("commandLauncher",
-                "historySource", "auto")
-            return SettingsStore.validCommandHistorySources.indexOf(candidate) >= 0
-                ? candidate : "auto"
-        }
-        readonly property string terminal: {
-            const candidate = SettingsStore.value("commandLauncher",
-                "terminal", "auto")
-            return SettingsStore.validCommandTerminals.indexOf(candidate) >= 0
-                ? candidate : "auto"
-        }
-        readonly property bool historySuggestions: SettingsStore.boolValue(
-            "commandLauncher", "historySuggestions", true)
-    }
-
     readonly property QtObject hyprland: QtObject {
         // Matches the numeric workspace bindings discovered on this machine.
         readonly property int workspaceCount: 10
@@ -398,20 +375,11 @@ QtObject {
         readonly property int height: 500
     }
 
-    readonly property QtObject notes: QtObject {
-        readonly property int width: 430
-        readonly property real heightRatio: 0.5
-        readonly property int minimumHeight: 440
-        readonly property int maximumHeight: 720
-    }
-
     readonly property QtObject shortcuts: QtObject {
         readonly property bool managed: SettingsStore.boolValue(
             "shortcuts", "managed", false)
         readonly property bool launcher: SettingsStore.boolValue(
             "shortcuts", "launcher", true)
-        readonly property bool commandLauncher: SettingsStore.boolValue(
-            "shortcuts", "commandLauncher", true)
         readonly property bool clipboard: SettingsStore.boolValue(
             "shortcuts", "clipboard", true)
         readonly property bool settings: SettingsStore.boolValue(
@@ -428,14 +396,10 @@ QtObject {
             "shortcuts", "regionScreenshot", true)
         readonly property bool regionRecording: SettingsStore.boolValue(
             "shortcuts", "regionRecording", true)
-        readonly property bool notes: SettingsStore.boolValue(
-            "shortcuts", "notes", true)
-        readonly property bool newNote: SettingsStore.boolValue(
-            "shortcuts", "newNote", true)
     }
 
     readonly property QtObject wallpaper: QtObject {
-        readonly property string backend: "awww"
+        readonly property string backend: "swww"
         readonly property string target: {
             const candidate = SettingsStore.value("wallpaper", "target", "current")
             return SettingsStore.validWallpaperTargets.indexOf(candidate) >= 0
@@ -448,7 +412,7 @@ QtObject {
                 ? candidate : "scheme-content"
         }
         readonly property var directories: [
-            "wallpaper",
+            "wallpapers",
             "Pictures/Wallpapers",
             "Pictures/wallpapers"
         ]
@@ -456,8 +420,6 @@ QtObject {
         readonly property int height: 440
         readonly property int galleryColumns: SettingsStore.numberValue(
             "wallpaper", "galleryColumns", 3, 2, 4)
-        readonly property bool refreshOnOpen: SettingsStore.boolValue(
-            "wallpaper", "refreshOnOpen", false)
         readonly property string transition: {
             const candidate = SettingsStore.value("wallpaper", "transition", "fade")
             return SettingsStore.validWallpaperTransitions.indexOf(candidate) >= 0
@@ -504,12 +466,5 @@ QtObject {
             return Number.isFinite(numeric) && numeric >= minimum
                 && numeric <= maximum ? numeric : NaN
         }
-    }
-
-    readonly property QtObject ai: QtObject {
-        readonly property bool enabled: false
-        readonly property string provider: ""
-        readonly property string model: ""
-        readonly property string endpoint: ""
     }
 }

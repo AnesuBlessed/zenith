@@ -93,13 +93,39 @@ static void write_pid(const char *pid_file, pid_t pid) {
     }
 }
 
+/* A stale PID can be reused by an unrelated process. Only signal a PID that
+ * still looks like the window we launched. */
+static int pid_matches(pid_t pid, const char *target) {
+    char path[64];
+    snprintf(path, sizeof(path), "/proc/%d/comm", (int)pid);
+    FILE *f = fopen(path, "r");
+    if (!f) return 1;
+    char comm[64] = {0};
+    if (!fgets(comm, sizeof(comm), f)) {
+        fclose(f);
+        return 1;
+    }
+    fclose(f);
+    size_t len = strlen(comm);
+    while (len > 0 && (comm[len - 1] == '\n' || comm[len - 1] == '\r')) {
+        comm[--len] = '\0';
+    }
+    const char *expected = strcmp(target, "picker") == 0 ? "quickshell" : "rofi";
+    return strcmp(comm, expected) == 0;
+}
+
 int main(int argc, char **argv) {
     if (argc < 3 || strcmp(argv[1], "toggle") != 0) {
-        fprintf(stderr, "Usage: %s toggle <launcher|clipboard|window|gallery>\n", argv[0]);
+        fprintf(stderr, "Usage: %s toggle <launcher|clipboard|window|picker>\n", argv[0]);
         return 1;
     }
 
     const char *target = argv[2];
+    if (strcmp(target, "launcher") != 0 && strcmp(target, "clipboard") != 0
+            && strcmp(target, "window") != 0 && strcmp(target, "picker") != 0) {
+        fprintf(stderr, "%s: unknown target '%s'\n", argv[0], target);
+        return 1;
+    }
     char pid_file[PATH_MAX];
     char pid_name[64];
     snprintf(pid_name, sizeof(pid_name), "%s.pid", target);
@@ -107,7 +133,8 @@ int main(int argc, char **argv) {
 
     /* 1. Fast path: If process exists and responds to kill(pid, 0), toggle off */
     pid_t existing_pid = read_pid(pid_file);
-    if (existing_pid > 0 && kill(existing_pid, 0) == 0) {
+    if (existing_pid > 0 && kill(existing_pid, 0) == 0
+            && pid_matches(existing_pid, target)) {
         kill(existing_pid, SIGTERM);
         unlink(pid_file);
         return 0;
@@ -158,11 +185,19 @@ int main(int argc, char **argv) {
             snprintf(theme_path, sizeof(theme_path), "%s/rofi/launcher.rasi", root);
             char *args[] = {"rofi", "-show", "window", "-theme", theme_path, NULL};
             execvp("rofi", args);
-        } else if (strcmp(target, "gallery") == 0) {
-            char gallery_path[PATH_MAX];
-            snprintf(gallery_path, sizeof(gallery_path), "%s/build/gallery", root);
-            char *args[] = {gallery_path, NULL};
-            execv(gallery_path, args);
+        } else if (strcmp(target, "picker") == 0) {
+            /* Wallpaper picker: a standalone Quickshell config with the same
+             * native backend as the in-shell wallpaper page. */
+            char shell_dir[PATH_MAX], shell_qml[PATH_MAX];
+            snprintf(shell_dir, sizeof(shell_dir), "%s/picker", root);
+            snprintf(shell_qml, sizeof(shell_qml), "%s/picker/shell.qml", root);
+            if (access(shell_qml, R_OK) != 0) {
+                fprintf(stderr, "Zenith picker missing at %s\n", shell_qml);
+                _exit(127);
+            }
+            setenv("ZENITH_ROOT", root, 1);
+            char *args[] = {"quickshell", "-p", shell_dir, NULL};
+            execvp("quickshell", args);
         }
 
         perror("execvp");

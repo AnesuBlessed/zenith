@@ -21,7 +21,7 @@ Item {
         && settingsPage.livePreviewActive
     readonly property string settingsPreviewMode: settingsPage.pillPreviewMode
     readonly property bool controlCenterOpen: page === "control-center"
-    readonly property bool wallpaperOpen: page === "wallpaper"
+    readonly property bool clipboardOpen: page === "clipboard"
     readonly property bool identityPickerOpen: page === "identity-image"
     property string identityReturnPage: "overview"
     readonly property bool insightOpen: page === "weather" || page === "calendar"
@@ -48,6 +48,18 @@ Item {
         if (!identityPickerOpen)
             return
         pageSelected(identityReturnPage)
+    }
+
+    function closeTransientUi(): bool {
+        if (identityPickerOpen) {
+            closeIdentityPicker()
+            return true
+        }
+        if (sessionOpen && sessionPage.cancelConfirmation())
+            return true
+        if (controlCenterOpen && controlCenter.closeExpandedSection())
+            return true
+        return false
     }
 
     ColumnLayout {
@@ -314,13 +326,19 @@ Item {
         }
 
         WallpaperPage {
-            visible: root.wallpaperOpen || root.identityPickerOpen
+            visible: root.identityPickerOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
             monitor: root.monitor
             selectionMode: root.identityPickerOpen
             onSelectionCompleted: root.closeIdentityPicker()
             onCancelRequested: root.closeIdentityPicker()
+        }
+        ClipboardPage {
+            visible: root.clipboardOpen
+            Layout.fillWidth: true
+            Layout.fillHeight: true
+            onCloseRequested: root.pageSelected("overview")
         }
     }
 }

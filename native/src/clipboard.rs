@@ -25,14 +25,19 @@ fn header(key: &str, value: &str) {
 pub fn clipboard_mode() -> Result {
     let get = |name| env::var(name).unwrap_or_default();
     let action = get("ROFI_RETV");
-    let state = get("ROFI_DATA");
     let info = get("ROFI_INFO");
 
     header("no-custom", "true");
     header("use-hot-keys", "true");
     header("keep-selection", "true");
 
-    // Action 1: User selected an item -> decode and copy to clipboard
+    // Action 11: Ctrl+Shift+Delete (or the broom button) -> wipe immediately
+    if action == "11" {
+        let _ = Command::new("cliphist").arg("wipe").status();
+        std::process::exit(0);
+    }
+
+    // Action 1: user selected an item -> decode and copy to the clipboard
     if action == "1" && !info.is_empty() {
         if let Ok(raw) = hex::decode(&info) {
             let mut child = Command::new("cliphist")
@@ -54,7 +59,7 @@ pub fn clipboard_mode() -> Result {
         std::process::exit(0);
     }
 
-    // Action 10: Shift+Delete -> delete specific entry
+    // Action 10: Shift+Delete -> delete a single entry
     if action == "10" && !info.is_empty() {
         if let Ok(raw) = hex::decode(&info) {
             let mut child = Command::new("cliphist")
@@ -65,22 +70,6 @@ pub fn clipboard_mode() -> Result {
                 stdin.write_all(&raw)?;
             }
             let _ = child.wait();
-        }
-    }
-
-    // Action 11: Ctrl+Shift+Delete -> Wipe history confirmation
-    if action == "11" {
-        header("prompt", "Wipe clipboard history?");
-        header("data", "confirm");
-        entry("Yes, wipe all clipboard history", "confirm-wipe", false);
-        entry("Cancel", "cancel", false);
-        return Ok(());
-    }
-
-    if state == "confirm" {
-        if action == "1" && info == "confirm-wipe" {
-            let _ = Command::new("cliphist").arg("wipe").status();
-            std::process::exit(0);
         }
     }
 

@@ -39,7 +39,7 @@ QtObject {
 
     property FileView identityFile: FileView {
         path: StandardPaths.writableLocation(StandardPaths.GenericStateLocation)
-            + "/zenith-identity.json"
+            + "/zenith/identity.json"
         blockLoading: true
         blockWrites: true
         atomicWrites: true
