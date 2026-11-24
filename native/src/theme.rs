@@ -118,7 +118,7 @@ pub fn apply_theme(wall_path: &Path) -> Result {
 
     // 3. Generate Foot Terminal Colors
     let foot_colors = format!(
-        "[colors]\n\
+        "[colors-dark]\n\
         foreground={}\n\
         background={}\n\
         regular0=000000\n\

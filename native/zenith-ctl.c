@@ -133,7 +133,16 @@ int main(int argc, char **argv) {
         } else if (strcmp(target, "clipboard") == 0) {
             char theme_path[PATH_MAX], mode_arg[PATH_MAX];
             snprintf(theme_path, sizeof(theme_path), "%s/rofi/clipboard.rasi", root);
-            snprintf(mode_arg, sizeof(mode_arg), "clipboard:%s/scripts/clipboard-mode.sh", root);
+
+            /* Prefer direct execution of compiled zenith-native if available, fallback to clipboard-mode.sh */
+            char native_bin[PATH_MAX];
+            snprintf(native_bin, sizeof(native_bin), "%s/build/zenith-native", root);
+            if (access(native_bin, X_OK) == 0) {
+                snprintf(mode_arg, sizeof(mode_arg), "clipboard:%s clipboard-mode", native_bin);
+            } else {
+                snprintf(mode_arg, sizeof(mode_arg), "clipboard:%s/scripts/clipboard-mode.sh", root);
+            }
+
             char *args[] = {
                 "rofi", "-no-config", "-show", "clipboard",
                 "-modes", mode_arg, "-hover-select",

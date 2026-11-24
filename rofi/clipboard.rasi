@@ -11,7 +11,7 @@ configuration {
 @theme "theme.rasi"
 @import "~/.cache/zenith/theme-override.rasi"
 
-// Main Window (Anchored Top-Right under Waybar) //
+// Main Window (Anchored Top-Right under Waybar/Top Bar) //
 window {
     width:                       360px;
     height:                      430px;
@@ -23,8 +23,8 @@ window {
     padding:                     0em;
     location:                    north east;
     anchor:                      north east;
-    x-offset:                    -12px;
-    y-offset:                    42px;
+    x-offset:                    -4px;
+    y-offset:                    36px;
     border:                      2px;
     border-radius:               1.2em;
     border-color:                @main-br;

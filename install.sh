@@ -220,14 +220,8 @@ log_ok "ZENITH_ROOT written to $CONFIG_HOME/zenith/root -> $ROOT_DIR"
 cp -rf "$ROOT_DIR/hypr/"* "$CONFIG_HOME/hypr/"
 log_ok "Hyprland Lua modules deployed to $CONFIG_HOME/hypr/"
 
-# Lock screen scripts — make executable
-chmod +x "$ROOT_DIR/scripts/lock.sh"
-chmod +x "$ROOT_DIR/scripts/lock-power.sh"
-chmod +x "$ROOT_DIR/scripts/lock-status.sh"
-chmod +x "$ROOT_DIR/scripts/clipboardctl.sh"
-chmod +x "$ROOT_DIR/scripts/notesctl.sh"
-chmod +x "$ROOT_DIR/scripts/notification-provenance.sh"
-chmod +x "$ROOT_DIR/scripts/wallpaperctl.sh"
+# User scripts — make all scripts in scripts/ executable
+chmod +x "$ROOT_DIR/scripts/"*.sh
 
 # hypridle + hyprlock configs
 ln -sf "$ROOT_DIR/hypr/hyprlock.conf"  "$HOME/.config/hypr/hyprlock.conf"
@@ -250,10 +244,27 @@ fi
 mkdir -p "$CONFIG_HOME/zenith/fastfetch"
 cp -rf "$ROOT_DIR/fastfetch/"* "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
 
-# Pre-populate theme override so rofi parses cleanly on first launch
+# Pre-populate theme override and state so rofi & quickshell parse cleanly on first launch
 CACHE_HOME="${XDG_CACHE_HOME:-$HOME/.cache}"
-mkdir -p "$CACHE_HOME/zenith"
+STATE_HOME="${XDG_STATE_HOME:-$HOME/.local/state}"
+mkdir -p "$CACHE_HOME/zenith" "$STATE_HOME/zenith"
 touch "$CACHE_HOME/zenith/theme-override.rasi"
+touch "$CACHE_HOME/zenith/wall.blur"
+touch "$CACHE_HOME/zenith/wall.quad"
+
+# Default fallback palette if none generated yet
+if [[ ! -f "$STATE_HOME/zenith/palette.json" ]]; then
+    cat << 'EOF' > "$STATE_HOME/zenith/palette.json"
+{
+  "bg": "#1e1e2e",
+  "fg": "#cdd6f4",
+  "accent": "#89b4fa",
+  "surface": "#313244",
+  "border": "#45475a",
+  "selection": "#585b70"
+}
+EOF
+fi
 
 if [[ -f "$HOME/.bashrc" ]] && ! grep -q "zenith/scripts/prompt.sh" "$HOME/.bashrc"; then
     printf '\n# Project Zenith Minimal Arrow Prompt\n[ -f "%s/scripts/prompt.sh" ] && source "%s/scripts/prompt.sh"\n' "$ROOT_DIR" "$ROOT_DIR" >> "$HOME/.bashrc"
