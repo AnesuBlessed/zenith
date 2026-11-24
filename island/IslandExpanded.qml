@@ -126,7 +126,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "󱐋"
+                        text: "󰅃"
                         color: root.controlCenterOpen
                             ? Theme.primaryContainerText : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
@@ -142,31 +142,7 @@ Item {
                     Behavior on color { ColorAnimation { duration: Animations.fast } }
                 }
 
-                Rectangle {
-                    Layout.preferredWidth: 34
-                    Layout.preferredHeight: 30
-                    radius: Theme.radiusSmall
-                    color: root.wallpaperOpen ? Theme.primaryContainer
-                        : wallpaperNavHover.hovered
-                            ? Theme.surfaceContainerHigh : "transparent"
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰸉"
-                        color: root.wallpaperOpen
-                            ? Theme.primaryContainerText : Theme.surfaceVariantText
-                        font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
-                    }
-
-                    HoverHandler { id: wallpaperNavHover }
-                    TapHandler {
-                        onTapped: root.pageSelected(root.wallpaperOpen
-                            ? "overview" : "wallpaper")
-                    }
-
-                    Behavior on color { ColorAnimation { duration: Animations.fast } }
-                }
 
                 Rectangle {
                     Layout.preferredWidth: 34

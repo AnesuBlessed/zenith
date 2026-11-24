@@ -71,9 +71,7 @@ Item {
         { id: "displays", icon: "󰍹", label: "Displays" },
         { id: "notifications", icon: "󰂚", label: "Notifications" },
         { id: "media", icon: "󰝚", label: "Media" },
-        { id: "wallpaper", icon: "󰸉", label: "Wallpaper" },
         { id: "dashboard", icon: "󰕮", label: "Dashboard" },
-        { id: "command-launcher", icon: "", label: "Command Launcher" },
         { id: "shortcuts", icon: "󰌌", label: "Shortcuts" },
         { id: "integrations", icon: "󰕮", label: "System Integrations" }
     ]

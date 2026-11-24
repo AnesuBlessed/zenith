@@ -8,17 +8,13 @@ Item {
     signal powerRequested()
     signal captureRequested()
     property bool powerHovered: false
-    readonly property var displayOrder: CaptureService.recording
-            && Config.island.restItemOrder.indexOf("PowerProfile") < 0
-        ? Config.island.restItemOrder.concat(["PowerProfile"])
-        : Config.island.restItemOrder
-    readonly property var leftDisplayOrder: displayOrder.slice(0,
-        Math.ceil(displayOrder.length / 2))
-    readonly property var rightDisplayOrder: displayOrder.slice(
-        Math.ceil(displayOrder.length / 2))
+    // Force PowerProfile to be first, followed by Dnd on the left, Clock centered, Weather/KeepAwake on the right
+    readonly property var displayOrder: ["PowerProfile", "Dnd", "KeepAwake", "Weather"]
+    readonly property var leftDisplayOrder: ["PowerProfile", "Dnd"]
+    readonly property var rightDisplayOrder: ["KeepAwake", "Weather"]
     readonly property real horizontalPadding: Theme.space2
     readonly property real sideWidth: Math.max(
-        leftItems.implicitWidth, rightItems.implicitWidth)
+        leftItems.implicitWidth, rightItems.implicitWidth, 48)
     readonly property real naturalContentWidth: restClock.implicitWidth
         + 2 * (sideWidth + Config.island.restItemSpacing)
     readonly property real availableContentWidth: Math.max(0,
@@ -38,6 +34,8 @@ Item {
             anchors.right: restClock.left
             anchors.rightMargin: Config.island.restItemSpacing
             anchors.verticalCenter: parent.verticalCenter
+            width: root.sideWidth
+            Layout.alignment: Qt.AlignRight
             spacing: Config.island.restItemSpacing
 
             Repeater {
@@ -66,6 +64,8 @@ Item {
             anchors.left: restClock.right
             anchors.leftMargin: Config.island.restItemSpacing
             anchors.verticalCenter: parent.verticalCenter
+            width: root.sideWidth
+            Layout.alignment: Qt.AlignLeft
             spacing: Config.island.restItemSpacing
 
             Repeater {

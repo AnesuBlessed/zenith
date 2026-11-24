@@ -22,6 +22,7 @@ QtObject {
     signal notificationsCloseRequested()
     signal captureOpenRequested()
     signal captureCloseRequested()
+    signal sessionToggleRequested()
     signal sessionOpenRequested()
     signal sessionCloseRequested()
     signal settingsOpenRequested(string section)
@@ -151,6 +152,11 @@ QtObject {
         function close(): string {
             root.sessionCloseRequested()
             return "SESSION_PAGE_CLOSE_SUCCESS"
+        }
+
+        function toggle(): string {
+            root.sessionToggleRequested()
+            return "SESSION_PAGE_TOGGLE_SUCCESS"
         }
     }
 

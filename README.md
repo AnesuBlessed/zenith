@@ -43,7 +43,7 @@
 | `SUPER + [1-9]` | Switch Workspace | Hyprland Workspaces 1–9 |
 | `SUPER + BackSpace`| Pocket Dimension | Special Scratchpad Workspace |
 | `SUPER + L` | Lock Screen | `hyprlock` |
-| `SUPER + Escape` | Power Menu | `wlogout` |
+| `SUPER + Escape` | Power Menu | Island Session Screen |
 | `Print` | Region Screenshot | `grim` + `slurp` -> Clipboard |
 | `SHIFT + Print` | Annotate Screenshot | `grim` + `slurp` -> `swappy` |
 | `SUPER + SHIFT + O`| Region OCR | `grim` + `tesseract` -> Clipboard |

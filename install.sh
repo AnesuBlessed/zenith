@@ -117,7 +117,7 @@ PACMAN_PACKAGES=(
     sddm
 
     # Logout screen & OCR
-    wlogout tesseract tesseract-data-eng
+    tesseract tesseract-data-eng
 )
 
 AUR_PACKAGES=(

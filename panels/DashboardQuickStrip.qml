@@ -25,8 +25,8 @@ RowLayout {
             accent: BluetoothService.connected ? Theme.primary
                 : Theme.surfaceVariantText,
             page: "control-center", available: BluetoothService.available },
-        { label: "Focus", value: NotificationService.doNotDisturb ? "DND on" : "DND off",
-            icon: NotificationService.doNotDisturb ? "󰂛" : "󰂚",
+        { label: "Do Not Disturb", value: NotificationService.doNotDisturb ? "Active" : "Off",
+            icon: NotificationService.doNotDisturb ? "󰃜" : "󰂚",
             accent: NotificationService.doNotDisturb ? Theme.tertiary : Theme.primary,
             page: "notifications", available: true },
         { label: "Power", value: PowerProfileService.profileName,

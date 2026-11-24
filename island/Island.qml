@@ -466,6 +466,17 @@ PanelWindow {
         function onControlCenterCloseRequested(): void {
             islandController.closePage("control-center")
         }
+        function onSessionToggleRequested(): void {
+            if (window.presentationTarget)
+                islandController.togglePage("session")
+        }
+        function onSessionOpenRequested(): void {
+            if (window.presentationTarget)
+                islandController.openPage("session")
+        }
+        function onSessionCloseRequested(): void {
+            islandController.closePage("session")
+        }
         function onNotificationsToggleRequested(): void {
             if (window.presentationTarget)
                 islandController.togglePage("notifications")

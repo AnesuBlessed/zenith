@@ -586,9 +586,9 @@ Item {
                 ControlTile {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
-                    title: "Do not disturb"
-                    detail: NotificationService.doNotDisturb ? "On" : "Off"
-                    icon: NotificationService.doNotDisturb ? "󰂛" : "󰂚"
+                    title: "Do Not Disturb"
+                    detail: NotificationService.doNotDisturb ? "Active" : "Off"
+                    icon: NotificationService.doNotDisturb ? "󰃜" : "󰂚"
                     checked: NotificationService.doNotDisturb
                     accent: Theme.warning
                     onActivated: NotificationService.toggleDoNotDisturb()

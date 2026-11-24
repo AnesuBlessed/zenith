@@ -42,12 +42,15 @@ Item {
     Component {
         id: dndComponent
         Item {
-            implicitWidth: Math.round(14 * Config.island.restIconScale)
+            implicitWidth: NotificationService.count > 0 ? 24 : Math.round(14 * Config.island.restIconScale)
             implicitHeight: 20
+            Behavior on implicitWidth { NumberAnimation { duration: Animations.fast } }
+
             Text {
                 visible: NotificationService.count === 0
                 anchors.centerIn: parent
-                text: NotificationService.doNotDisturb ? "󰂛" : "󰂚"
+                // Crescent moon icon for Do Not Disturb
+                text: NotificationService.doNotDisturb ? "󰃜" : "󰂚"
                 color: NotificationService.doNotDisturb
                     ? Theme.tertiary : Theme.surfaceText
                 font.family: Config.appearance.monoFontFamily
@@ -56,9 +59,28 @@ Item {
             Rectangle {
                 visible: NotificationService.count > 0
                 anchors.centerIn: parent
-                width: 13; height: 13; radius: width / 2
+                width: Math.max(16, notifyCountText.implicitWidth + 8)
+                height: 15
+                radius: height / 2
                 color: Theme.error
-                Text { anchors.fill: parent; anchors.leftMargin: 1; text: NotificationService.count > 99 ? "99+" : NotificationService.count; color: Theme.foregroundFor(parent.color); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.family: Config.appearance.monoFontFamily; font.pixelSize: Math.round(7 * Config.island.restTextScale); font.weight: Font.Bold }
+                RowLayout {
+                    anchors.centerIn: parent
+                    spacing: 2
+                    Text {
+                        text: "󰂚"
+                        color: "#ffffff"
+                        font.family: Config.appearance.monoFontFamily
+                        font.pixelSize: 8
+                    }
+                    Text {
+                        id: notifyCountText
+                        text: NotificationService.count > 99 ? "99+" : NotificationService.count
+                        color: "#ffffff"
+                        font.family: Config.appearance.monoFontFamily
+                        font.pixelSize: Math.round(8 * Config.island.restTextScale)
+                        font.weight: Font.Bold
+                    }
+                }
             }
             TapHandler { onTapped: NotificationService.toggleDoNotDisturb() }
         }

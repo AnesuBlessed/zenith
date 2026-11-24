@@ -113,3 +113,7 @@ Comprehensive summary of all issues resolved, configurations modernized, and enh
 - [x] **Layer Shell Interface:** Quickshell Dynamic Island with complete helper scripts and proper layer rules.
 - [x] **Fast App Launcher:** Instant C `zenith-ctl` dispatcher coupled with pixel-aligned dual-pane Rofi.
 - [x] **Terminal Client:** Lightweight `foot` terminal configured with fast prompt and ASCII branding.
+- [x] **Odyssey Island Alignment:** Power icon first, symmetric centering, Control Center clean navigation, crescent moon Do Not Disturb, and resting notification pill popup.
+- [x] **Native Island Session Overlay:** `Super + Escape` directly summons Island Session screen; `wlogout` removed.
+- [x] **Session & Capture Tools Enabled:** Implemented full `probe` responses in `sessionctl.sh` and `capturectl.sh`.
+- [x] **Settings Streamlining:** Command launcher and wallpaper sections removed from Island Settings.

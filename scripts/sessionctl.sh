@@ -7,6 +7,9 @@ set -euo pipefail
 cmd="${1:-}"
 
 case "$cmd" in
+    probe)
+        printf "LOCK=ready\nLOGOUT=ready\nSUSPEND=ready\nHIBERNATE=ready\nREBOOT=ready\nSHUTDOWN=ready\n"
+        ;;
     lock)
         pidof hyprlock >/dev/null || hyprlock &
         ;;

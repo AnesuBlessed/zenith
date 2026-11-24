@@ -10,6 +10,9 @@ mkdir -p "$save_dir"
 timestamp="$(date +%Y-%m-%d_%H-%M-%S)"
 
 case "$cmd" in
+    probe)
+        printf "SCREENSHOT=ready\nCLIPBOARD=ready\nRECORDING=ready\nREGION=ready\n"
+        ;;
     screenshot-screen)
         file="$save_dir/Screenshot_${timestamp}.png"
         grim "$file"

@@ -94,9 +94,9 @@ hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("quickshell ipc toggle control-center
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(zenith_ctl .. " toggle gallery"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(paths.bin("zenith-native") .. " wallpaper random"))
 
--- System & Session
+-- System & Session (Island Session Overlay)
 hl.bind(mainMod .. " + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("wlogout"))
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call session-page toggle || quickshell ipc call session-page open || true"))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("hyprctl reload && " .. paths.bin("zenith-native") .. " align"))
 
 -- Laptop Lid Switch
