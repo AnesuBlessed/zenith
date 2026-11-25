@@ -9,6 +9,10 @@ import "../theme"
 
 PanelWindow {
     id: main
+
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+        Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
     color: "transparent"
@@ -40,7 +44,7 @@ PanelWindow {
     // columns that fill the whole screen; with many wallpapers no
     // column count fits at any scale ≥ 1, so it falls back to the
     // minimum size and the grid becomes scrollable instead.
-    property real baseCardW: 220
+    property real baseCardW: 220 * main.uiScale
     property real baseCardH: baseCardW * 0.866
     property real baseHSpacing: 6
     property real baseVSpacing: 6

@@ -9,6 +9,10 @@ import "../theme"
 
 PanelWindow {
     id: main
+
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+        Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
     color: "transparent"
@@ -265,8 +269,8 @@ PanelWindow {
 
         delegate: Item {
             id: delegateItem
-            width: 340
-            height: 215
+            width: Math.round(340 * main.uiScale)
+            height: Math.round(215 * main.uiScale)
 
             property bool isCurrent: PathView.isCurrentItem
             // Bind through model.fileName so this stays in sync across

@@ -8,7 +8,7 @@ Item {
     signal powerRequested()
     signal captureRequested()
     property bool powerHovered: false
-    // Force PowerProfile to be first, followed by Dnd on the left, Clock centered, Weather/KeepAwake on the right
+    // PowerProfile on the left, Clock centered, Weather/KeepAwake on the right.
     // Inactive items (e.g. Weather with no data) are removed entirely instead
     // of hidden, so no phantom gap pushes the cluster off-center.
     function isActive(itemId: string): bool {
@@ -16,7 +16,7 @@ Item {
             || (Config.weather.enabled && WeatherService.available)
     }
     readonly property var leftDisplayOrder:
-        ["PowerProfile", "Dnd"].filter(root.isActive)
+        ["PowerProfile"].filter(root.isActive)
     readonly property var rightDisplayOrder:
         ["KeepAwake", "Weather"].filter(root.isActive)
     readonly property real horizontalPadding: Theme.space2

@@ -10,20 +10,22 @@ import "../theme"
 
 PanelWindow {
     id: main
+
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+        Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
     color: "transparent"
 
     property string currentImagePath: ""
     property bool bgToggle: false
-    property string searchQuery: ""
-    property date currentDateTime: new Date()
     property int selectedIndex: 0
 
     property bool contentRevealed: false
 
-    readonly property int cardSourceW: 960
-    readonly property int cardSourceH: 540
+    readonly property int cardSourceW: Math.round(960 * main.uiScale)
+    readonly property int cardSourceH: Math.round(540 * main.uiScale)
 
     readonly property var defaultVideoExtensions: ["mp4", "webm", "mov", "avi", "mkv", "gif", "m4v", "flv", "wmv", "mpeg", "3gp"]
     readonly property var videoExtensions: (configs.video_extensions && configs.video_extensions.length > 0)
@@ -71,9 +73,6 @@ PanelWindow {
         showDirs: false
         nameFilters: {
             const base = ["png", "jpg", "jpeg"].concat(main.videoExtensions)
-            if (main.searchQuery.length > 0) {
-                return base.map(function(ext) { return "*" + main.searchQuery + "*." + ext })
-            }
             return base.map(function(ext) { return "*." + ext })
         }
         sortField: FolderListModel.Name
@@ -158,13 +157,6 @@ PanelWindow {
             }
             updateBackground()
         }
-    }
-
-    Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        onTriggered: currentDateTime = new Date()
     }
 
     function updateBackground() {
@@ -288,24 +280,24 @@ PanelWindow {
                     visible: absDiff <= 8
 
                     property real targetWidth: {
-                        if (absDiff === 0) return 640
-                        if (absDiff === 1) return 420
-                        if (absDiff === 2) return 280
-                        return 180
+                        if (absDiff === 0) return 640 * main.uiScale
+                        if (absDiff === 1) return 420 * main.uiScale
+                        if (absDiff === 2) return 280 * main.uiScale
+                        return 180 * main.uiScale
                     }
 
                     property real targetHeight: {
-                        if (absDiff === 0) return 360
-                        if (absDiff === 1) return 236
-                        if (absDiff === 2) return 157
-                        return 101
+                        if (absDiff === 0) return 360 * main.uiScale
+                        if (absDiff === 1) return 236 * main.uiScale
+                        if (absDiff === 2) return 157 * main.uiScale
+                        return 101 * main.uiScale
                     }
 
                     property real targetX: {
                         if (diff === 0) return (main.width - targetWidth) / 2
-                        if (absDiff === 1) return (main.width / 2) + (diff * 460) - (targetWidth / 2)
-                        if (absDiff === 2) return (main.width / 2) + (Math.sign(diff) * 740) - (targetWidth / 2)
-                        return (main.width / 2) + (diff * 200) - (targetWidth / 2)
+                        if (absDiff === 1) return (main.width / 2) + (diff * 460 * main.uiScale) - (targetWidth / 2)
+                        if (absDiff === 2) return (main.width / 2) + (Math.sign(diff) * 740 * main.uiScale) - (targetWidth / 2)
+                        return (main.width / 2) + (diff * 200 * main.uiScale) - (targetWidth / 2)
                     }
 
                     property real targetY: {
@@ -490,8 +482,8 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.top: parent.top
             anchors.topMargin: main.height * 0.08
-            width: 320
-            height: 140
+            width: Math.round(320 * main.uiScale)
+            height: Math.round(120 * main.uiScale)
             z: 100
 
             Rectangle {
@@ -515,9 +507,9 @@ PanelWindow {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDateTime(currentDateTime, "dddd").toUpperCase()
+                    text: "ZENITH"
                     color: Zn.text
-                    font.pixelSize: 52
+                    font.pixelSize: 52 * main.uiScale
                     font.letterSpacing: 12
                     font.family: "sans-serif"
                     style: Text.Raised
@@ -526,24 +518,14 @@ PanelWindow {
 
                 Text {
                     anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDateTime(currentDateTime, "dd MMM yyyy").toUpperCase()
+                    text: "WALLPAPERS"
                     color: Zn.text
-                    font.pixelSize: 14
+                    font.pixelSize: Math.round(14 * main.uiScale)
                     font.letterSpacing: 4
                     font.family: "sans-serif"
                     font.weight: Font.Bold
                 }
 
-                Item { width: 1; height: 10 }
-
-                Text {
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    text: Qt.formatDateTime(currentDateTime, "h:mm AP")
-                    color: Zn.muted
-                    font.pixelSize: 12
-                    font.letterSpacing: 2
-                    font.family: "sans-serif"
-                }
             }
         }
     }

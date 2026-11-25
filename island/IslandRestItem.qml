@@ -17,7 +17,6 @@ Item {
         id: contentLoader
         anchors.centerIn: parent
         sourceComponent: root.itemId === "Weather" ? weatherComponent
-            : root.itemId === "Dnd" ? dndComponent
             : root.itemId === "Clock" ? clockComponent
             : root.itemId === "KeepAwake" ? keepAwakeComponent
             : root.itemId === "PowerProfile" ? powerComponent : null
@@ -42,27 +41,6 @@ Item {
         }
     }
 
-    Component {
-        id: dndComponent
-        Item {
-            // The persistent count badge was removed: arrivals present the
-            // full notification card transiently instead; the moon stays as
-            // the do-not-disturb toggle.
-            implicitWidth: Math.round(14 * Config.island.restIconScale)
-            implicitHeight: 20
-
-            Text {
-                anchors.centerIn: parent
-                // Crescent moon icon for Do Not Disturb
-                text: NotificationService.doNotDisturb ? "󰃜" : "󰂚"
-                color: NotificationService.doNotDisturb
-                    ? Theme.tertiary : Theme.surfaceText
-                font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Math.round(11 * Config.island.restIconScale)
-            }
-            TapHandler { onTapped: NotificationService.toggleDoNotDisturb() }
-        }
-    }
 
     Component {
         id: clockComponent

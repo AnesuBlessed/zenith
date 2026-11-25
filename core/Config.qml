@@ -124,7 +124,6 @@ QtObject {
             "island", "restItemOrder", SettingsStore.validRestIslandItems,
             SettingsStore.validRestIslandItems)
         readonly property bool restShowWeather: restItemOrder.indexOf("Weather") >= 0
-        readonly property bool restShowDnd: restItemOrder.indexOf("Dnd") >= 0
         readonly property bool restShowKeepAwake:
             restItemOrder.indexOf("KeepAwake") >= 0
         readonly property bool restShowPowerProfile:
@@ -153,7 +152,6 @@ QtObject {
         readonly property bool hoverShowAudio: hoverItemOrder.indexOf("Audio") >= 0
         readonly property bool hoverShowNetwork:
             hoverItemOrder.indexOf("Network") >= 0
-        readonly property bool hoverShowDnd: hoverItemOrder.indexOf("Dnd") >= 0
         readonly property bool hoverShowBluetooth:
             hoverItemOrder.indexOf("Bluetooth") >= 0
         readonly property bool hoverShowKeepAwake:

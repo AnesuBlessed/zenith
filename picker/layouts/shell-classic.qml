@@ -7,6 +7,10 @@ import "../theme"
 
 PanelWindow {
     id: main
+
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+        Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: 500
     implicitWidth: Screen.width
     color: "transparent"

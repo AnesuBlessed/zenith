@@ -9,20 +9,22 @@ import "../theme"
 
 PanelWindow {
     id: main
+
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+        Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
     color: "transparent"
     property int speed: 5000
     property string currentImagePath: ""
     property bool bgToggle: false
-    property string searchQuery: ""
-    property date currentDateTime: new Date()
 
     // -----------------------------------------------------
     // COVERFLOW TUNABLES
     // -----------------------------------------------------
-    property real cardW: 190
-    property real cardH: 340
+    property real cardW: 190 * main.uiScale
+    property real cardH: 340 * main.uiScale
     property real centerScale: 1.15
     property real edgeScale: 0.55
     property real gapPx: 20  // small, clearly visible constant gap between EVERY pair of cards
@@ -141,19 +143,9 @@ PanelWindow {
         // When a search query is active, prefix each pattern with it.
         nameFilters: {
             const base = ["png", "jpg", "jpeg"].concat(main.videoExtensions)
-            if (main.searchQuery.length > 0) {
-                return base.map(function(ext) { return "*" + main.searchQuery + "*." + ext })
-            }
             return base.map(function(ext) { return "*." + ext })
         }
         sortField: FolderListModel.Name
-    }
-
-    Timer {
-        interval: 1000
-        running: true
-        repeat: true
-        onTriggered: currentDateTime = new Date()
     }
 
     function updateBackground() {
@@ -262,16 +254,6 @@ PanelWindow {
         }
     }
 
-    MouseArea {
-        id: dismissSearchArea
-        anchors.fill: parent
-        z: -1
-        enabled: searchInput.activeFocus
-        onClicked: {
-            searchInput.text = "";
-            pathView.forceActiveFocus();
-        }
-    }
 
     // -----------------------------------------------------
     // FLAT ROW OF UNIFORMLY-SHEARED (PARALLELOGRAM) CARDS
@@ -531,8 +513,6 @@ PanelWindow {
                 for (let i = 0; i < big; i++) pathView.decrementCurrentIndex();
             } else if (event.key === Qt.Key_Space || event.key === Qt.Key_Return) {
                 pathView.activateCurrent();
-            } else if (event.key === Qt.Key_Slash) {
-                searchInput.forceActiveFocus();
             } else if (event.key === Qt.Key_Escape) {
                 Qt.quit();
             } else {
@@ -555,7 +535,7 @@ PanelWindow {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatDateTime(currentDateTime, "dddd").toUpperCase()
+            text: "ZENITH"
             color: Zn.text
             font.pixelSize: 60
             font.letterSpacing: 12
@@ -567,7 +547,7 @@ PanelWindow {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: Qt.formatDateTime(currentDateTime, "dd MMM yyyy").toUpperCase()
+            text: "WALLPAPERS"
             color: Zn.text
             font.pixelSize: 16
             font.letterSpacing: 4
@@ -576,7 +556,7 @@ PanelWindow {
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
-            text: "- " + Qt.formatDateTime(currentDateTime, "hh:mm AP") + " -"
+            text: "Super + W to change · Enter to apply"
             color: Zn.text
             font.pixelSize: 14
             font.letterSpacing: 3
@@ -585,47 +565,5 @@ PanelWindow {
 
         Item { width: 1; height: 14 }
 
-        Rectangle {
-            id: searchBox
-            anchors.horizontalCenter: parent.horizontalCenter
-            width: 360
-            height: 40
-            radius: 20
-            color: "#33000000"
-            border.width: 1
-            border.color: Qt.alpha(Zn.text, 0.2)
-
-            TextInput {
-                id: searchInput
-                anchors.fill: parent
-                anchors.leftMargin: 18
-                anchors.rightMargin: 18
-                verticalAlignment: TextInput.AlignVCenter
-                color: Zn.text
-                font.pixelSize: 14
-                clip: true
-                selectByMouse: true
-
-                onTextChanged: searchQuery = text
-
-                Keys.onEscapePressed: {
-                    searchInput.text = "";
-                    pathView.forceActiveFocus();
-                }
-                Keys.onReturnPressed: pathView.forceActiveFocus()
-                Keys.onEnterPressed: pathView.forceActiveFocus()
-                Keys.onDownPressed: pathView.forceActiveFocus()
-                Keys.onTabPressed: pathView.forceActiveFocus()
-
-                Text {
-                    anchors.fill: parent
-                    verticalAlignment: Text.AlignVCenter
-                    text: "Search wallpapers..."
-                    color: Qt.alpha(Zn.text, 0.53)
-                    font.pixelSize: 14
-                    visible: searchInput.text.length === 0
-                }
-            }
-        }
     }
 }

@@ -32,10 +32,10 @@ QtObject {
     ]
     readonly property var validIslandPolicies: ["all", "primary"]
     readonly property var validRestIslandItems: [
-        "PowerProfile", "Dnd", "Weather", "KeepAwake"
+        "PowerProfile", "Weather", "KeepAwake"
     ]
     readonly property var validHoverIslandItems: [
-        "Workspaces", "Clock", "Media", "Audio", "Network", "Dnd",
+        "Workspaces", "Clock", "Media", "Audio", "Network",
         "Bluetooth", "KeepAwake", "Battery"
     ]
 

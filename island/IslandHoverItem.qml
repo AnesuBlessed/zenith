@@ -22,8 +22,6 @@ Item {
         : itemId === "Audio" || itemId === "Network"
             ? Math.round(42 * Config.island.hoverContentScale)
         : itemId === "Battery" ? Math.round(48 * Config.island.hoverContentScale)
-        : itemId === "Dnd" && NotificationService.count > 0
-            ? Math.round(18 * Config.island.hoverContentScale)
         : Math.round(24 * Config.island.hoverContentScale)
     readonly property real minimumWidth: itemId === "Workspaces"
         ? Math.round(56 * Config.island.hoverIconScale)
@@ -35,8 +33,6 @@ Item {
             ? Math.round(38 * Config.island.hoverContentScale)
         : itemId === "Battery"
             ? Math.round(44 * Config.island.hoverContentScale)
-        : itemId === "Dnd" && NotificationService.count > 0
-            ? Math.round(18 * Config.island.hoverContentScale)
         : Math.round(22 * Config.island.hoverContentScale)
     implicitHeight: Config.island.hoverHeight
     visible: available
@@ -48,7 +44,6 @@ Item {
             : root.itemId === "Media" ? mediaComponent
             : root.itemId === "Audio" ? audioComponent
             : root.itemId === "Network" ? networkComponent
-            : root.itemId === "Dnd" ? dndComponent
             : root.itemId === "Bluetooth" ? bluetoothComponent
             : root.itemId === "KeepAwake" ? keepAwakeComponent
             : root.itemId === "Battery" ? batteryComponent : null
@@ -176,26 +171,6 @@ Item {
             value: NetworkService.wifiConnected ? NetworkService.signalPercent + "%"
                 : (NetworkService.ethernetConnected ? "LAN" : "OFF")
             accent: NetworkService.connected ? Theme.primary : Theme.surfaceVariantText
-        }
-    }
-    Component {
-        id: dndComponent
-        Item {
-            Text {
-                visible: NotificationService.count === 0
-                anchors.centerIn: parent
-                text: NotificationService.doNotDisturb ? "󰂛" : "󰂚"
-                color: NotificationService.doNotDisturb ? Theme.tertiary : Theme.surfaceText
-                font.family: Config.appearance.monoFontFamily
-                font.pixelSize: Math.round(14 * Config.island.hoverIconScale)
-            }
-            Rectangle {
-                visible: NotificationService.count > 0
-                anchors.centerIn: parent
-                width: 15; height: 15; radius: width / 2
-                color: Theme.error
-                Text { anchors.fill: parent; anchors.leftMargin: 1; text: NotificationService.count > 99 ? "99+" : NotificationService.count; color: Theme.foregroundFor(parent.color); horizontalAlignment: Text.AlignHCenter; verticalAlignment: Text.AlignVCenter; font.family: Config.appearance.monoFontFamily; font.pixelSize: 8; font.weight: Font.Bold }
-            }
         }
     }
     Component {

@@ -1318,13 +1318,6 @@ Item {
                                     }
                                     PreferenceToggleRow {
                                         Layout.fillWidth: true
-                                        label: "Do not disturb"
-                                        checked: Config.island.restShowDnd
-                                        onToggled: enabled => root.setIslandItem(
-                                            "rest", "Dnd", enabled)
-                                    }
-                                    PreferenceToggleRow {
-                                        Layout.fillWidth: true
                                         label: "Keep awake"
                                         checked: Config.island.restShowKeepAwake
                                         onToggled: enabled => root.setIslandItem(
@@ -1378,13 +1371,6 @@ Item {
                                         checked: Config.island.hoverShowNetwork
                                         onToggled: enabled => root.setIslandItem(
                                             "hover", "Network", enabled)
-                                    }
-                                    PreferenceToggleRow {
-                                        Layout.fillWidth: true
-                                        label: "Do not disturb"
-                                        checked: Config.island.hoverShowDnd
-                                        onToggled: enabled => root.setIslandItem(
-                                            "hover", "Dnd", enabled)
                                     }
                                     PreferenceToggleRow {
                                         Layout.fillWidth: true

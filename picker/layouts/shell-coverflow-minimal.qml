@@ -19,8 +19,8 @@ PanelWindow {
     // -----------------------------------------------------
     // COVERFLOW TUNABLES
     // -----------------------------------------------------
-    property real cardW: 190
-    property real cardH: 340
+    property real cardW: 190 * main.uiScale
+    property real cardH: 340 * main.uiScale
     property real centerScale: 1.15
     property real edgeScale: 0.55
     property real gapPx: 20

@@ -70,10 +70,15 @@ Item {
                         color: Theme.surfaceText
                         font.family: Config.appearance.monoFontFamily
                         font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
+                        // Mirror the crescent moon so it faces right, tilted NE.
+                        transform: [
+                            Scale { xScale: NotificationService.doNotDisturb ? -1 : 1 },
+                            Rotation { angle: NotificationService.doNotDisturb ? -18 : 0 }
+                        ]
                     }
 
                     Text {
-                        text: NotificationService.doNotDisturb ? "DND on" : "DND off"
+                        text: NotificationService.doNotDisturb ? "Do Not Disturb on" : "Do Not Disturb off"
                         // DND state is communicated by the bell; keep the label
                         // legible and stable across dark/light palettes.
                         color: Theme.surfaceText

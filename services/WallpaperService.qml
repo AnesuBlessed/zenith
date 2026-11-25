@@ -82,15 +82,11 @@ QtObject {
         "shell-bottom-dock.qml",
         "shell-classic.qml",
         "shell-coverflow.qml",
-        "shell-coverflow-clear.qml",
         "shell-coverflow-minimal.qml",
         "shell-floating.qml",
         "shell-floating-center-reflection.qml",
         "shell-floating-clean.qml",
-        "shell-floating-clear.qml",
-        "shell-floating-clear-clean.qml",
         "shell-floating-minimal.qml",
-        "shell-floating-minimal-clean.qml",
         "shell-grid-view.qml",
         "shell-hexcomb.qml"
     ]

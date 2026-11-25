@@ -10,6 +10,10 @@ import "../theme"
 
 PanelWindow {
     id: main
+
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+        Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
     // Transparent surface; the dark backdrop is an inner Rectangle that
@@ -20,7 +24,6 @@ PanelWindow {
     property string currentImagePath: ""
     property string appliedWallpaperPath: ""
     property bool bgToggle: false
-    property string searchQuery: ""
     property int selectedIndex: 0
 
     // Reveal state: false until the first background image is decoded.
@@ -99,9 +102,6 @@ PanelWindow {
         showDirs: false
         nameFilters: {
             const base = ["png", "jpg", "jpeg"].concat(main.videoExtensions)
-            if (main.searchQuery.length > 0) {
-                return base.map(function(ext) { return "*" + main.searchQuery + "*." + ext })
-            }
             return base.map(function(ext) { return "*." + ext })
         }
         sortField: FolderListModel.Name
@@ -556,12 +556,11 @@ PanelWindow {
 
                         Text {
                             anchors.left: parent.left
-                            width: parent.width * 0.6
+                            width: parent.width
                             text: folderModel.count > 0 ? folderModel.get(main.selectedIndex, "fileName") : ""
                             color: Zn.text
-                            font.pixelSize: 15
+                            font.pixelSize: 15 * main.uiScale
                             font.weight: Font.DemiBold
-                            elide: Text.ElideMiddle
                         }
                         Text {
                             anchors.right: parent.right

@@ -7,7 +7,6 @@ Item {
     property string context: "rest"
     readonly property var definitions: context === "rest" ? [
         { id: "Weather", icon: "󰖐", label: "Weather" },
-        { id: "Dnd", icon: "󰂛", label: "DND" },
         { id: "KeepAwake", icon: "󰅶", label: "Awake" },
         { id: "PowerProfile", icon: "󰓅", label: "Power" }
     ] : [
@@ -16,7 +15,6 @@ Item {
         { id: "Media", icon: "󰝚", label: "Media" },
         { id: "Audio", icon: "󰕾", label: "Audio" },
         { id: "Network", icon: "󰤨", label: "Network" },
-        { id: "Dnd", icon: "󰂛", label: "DND" },
         { id: "Bluetooth", icon: "󰂯", label: "Bluetooth" },
         { id: "KeepAwake", icon: "󰅶", label: "Awake" },
         { id: "Battery", icon: "󰁹", label: "Battery" }

@@ -47,6 +47,12 @@ Rectangle {
                 color: root.checked ? root.accent : Theme.surfaceVariantText
                 font.family: Config.appearance.monoFontFamily
                 font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)
+                // The crescent moon glyph faces left by default; mirror it to
+                // face right and tilt a little toward the north east.
+                transform: [
+                    Scale { xScale: root.icon === "󰃢" ? -1 : 1 },
+                    Rotation { angle: root.icon === "󰃢" ? -18 : 0 }
+                ]
             }
         }
 
