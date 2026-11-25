@@ -77,7 +77,8 @@ PACKAGES=(
 
     # Shell, launcher, clipboard, capture
     rofi-wayland cliphist wl-clipboard grim slurp swappy wf-recorder
-    swww jq imagemagick libnotify fastfetch ffmpeg
+    # Wallpaper daemon (swww was renamed upstream to awww; identical CLI)
+    awww jq imagemagick libnotify fastfetch ffmpeg
     qt6-5compat qt6-svg
 
     # Audio, network, hardware
@@ -104,19 +105,19 @@ AUR_OPTIONAL=(
 )
 
 log_info "Installing repository packages..."
-sudo pacman -S --needed --noconfirm "${PACKAGES[@]}"
+sudo pacman -S --needed --noconfirm --ask 4 "${PACKAGES[@]}"
 
 log_info "Installing AUR packages..."
 "$AUR_HELPER" -S --needed --noconfirm "${AUR_PACKAGES[@]}"
 
 log_info "Installing optional desktop extras..."
 for pkg in "${AUR_OPTIONAL[@]}"; do
-    "$AUR_HELPER" -S --needed --noconfirm "$pkg" \
+    "$AUR_HELPER" -S --needed --noconfirm --ask 4 "$pkg" \
         || log_warn "$pkg unavailable; its integration stays optional."
 done
 
 log_info "Installing optional video-wallpaper backend (mpvpaper)..."
-"$AUR_HELPER" -S --needed --noconfirm mpvpaper 2>/dev/null \
+"$AUR_HELPER" -S --needed --noconfirm --ask 4 mpvpaper 2>/dev/null \
     || log_warn "mpvpaper unavailable; animated video wallpapers stay disabled."
 
 # -----------------------------------------------------------------------------
@@ -256,9 +257,35 @@ touch "$CACHE_HOME/zenith/theme-override.rasi"
 
 if [[ -n "${WAYLAND_DISPLAY:-}" && -x "$ROOT_DIR/build/zenith-native" ]]; then
     log_info "Applying the initial wallpaper and palette..."
-    "$ROOT_DIR/build/zenith-native" wallpaper ensure >/dev/null 2>&1 \
-        || log_warn "Wallpaper bootstrap skipped; choose one from the picker (Super + W)."
+    if ! "$ROOT_DIR/build/zenith-native" wallpaper ensure >/dev/null; then
+        log_warn "Wallpaper bootstrap failed — run 'build/zenith-native wallpaper ensure' to see why."
+    fi
 fi
+
+# -----------------------------------------------------------------------------
+# 7b. Auto-repair: verify every core command resolves; anything missing gets a
+# targeted second pass (with the password prompt) instead of a warning.
+# -----------------------------------------------------------------------------
+log_info "Verifying core commands..."
+CORE_PAIRS=(
+    "hyprland:hyprland" "hyprlock:hyprlock" "hypridle:hypridle" "foot:foot"
+    "rofi:rofi-wayland" "wl-copy:wl-clipboard" "cliphist:cliphist"
+    "grim:grim" "slurp:slurp" "jq:jq" "magick:imagemagick"
+    "hyprctl:hyprland" "awww:awww" "fastfetch:fastfetch" "ffmpeg:ffmpeg"
+    "notify-send:libnotify" "brightnessctl:brightnessctl" "playerctl:playerctl"
+    "wf-recorder:wf-recorder" "quickshell:quickshell"
+)
+missing=()
+for pair in "${CORE_PAIRS[@]}"; do
+    cmd="${pair%%:*}"
+    command -v "$cmd" >/dev/null 2>&1 || missing+=("${pair#*:}")
+done
+if ((${#missing[@]} > 0)); then
+    log_warn "Missing commands detected: ${missing[*]} — installing automatically..."
+    sudo pacman -S --needed --noconfirm --ask 4 "${missing[@]}" \
+        || log_warn "Repair pass failed; run './install.sh' again or install manually."
+fi
+log_ok "Core commands verified."
 
 # -----------------------------------------------------------------------------
 # 8. Shell prompt

@@ -102,19 +102,36 @@ fn url_to_path(path: &Path) -> PathBuf {
     PathBuf::from(out)
 }
 
+/// The wallpaper daemon. Upstream renamed swww to awww (identical CLI);
+/// resolve whichever binary this system actually ships.
+fn wallpaper_daemon() -> (&'static str, &'static str) {
+    if exists("awww") {
+        ("awww", "awww-daemon")
+    } else if exists("swww") {
+        ("swww", "swww-daemon")
+    } else {
+        ("awww", "awww-daemon")
+    }
+}
+
 fn daemon_running() -> bool {
-    run("swww", &["query"]).is_ok_and(|o| o.status.success())
+    let (cli, _) = wallpaper_daemon();
+    run(cli, &["query"]).is_ok_and(|o| o.status.success())
 }
 
 fn ensure_daemon() -> Result {
     if daemon_running() {
         return Ok(());
     }
-    if !exists("swww") {
-        return Err(error("swww is not installed (pacman -S swww)"));
+    let (cli, daemon) = wallpaper_daemon();
+    if !exists(cli) {
+        return Err(error(format!(
+            "{} is not installed (pacman -S awww) — it replaced swww upstream",
+            cli
+        )));
     }
-    if exists("swww-daemon") {
-        let _ = Command::new("swww-daemon")
+    if exists(daemon) {
+        let _ = Command::new(daemon)
             .stdin(Stdio::null())
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -126,7 +143,7 @@ fn ensure_daemon() -> Result {
             return Ok(());
         }
     }
-    Err(error("swww-daemon did not become ready"))
+    Err(error(format!("{} did not become ready", daemon)))
 }
 
 fn transition_flags(kind: &str, duration: &str, reduced: bool) -> Vec<String> {
@@ -225,10 +242,12 @@ pub fn set(path: &Path, transition: &str, duration: &str, monitor: &str, reduced
             args.push(monitor.to_string());
         }
         let borrowed: Vec<&str> = args.iter().map(String::as_str).collect();
-        let output = run("swww", &borrowed)?;
+        let (cli, _) = wallpaper_daemon();
+        let output = run(cli, &borrowed)?;
         if !output.status.success() {
             return Err(error(format!(
-                "swww rejected the wallpaper: {}",
+                "{} rejected the wallpaper: {}",
+                cli,
                 String::from_utf8_lossy(&output.stderr).trim()
             )));
         }
@@ -306,7 +325,8 @@ pub fn apply_random() -> Result {
 
 /// Health probe used by the shell at boot and by the retry button.
 pub fn probe() -> Result {
-    if !exists("swww") {
+    let (cli, _) = wallpaper_daemon();
+    if !exists(cli) {
         println!("STATE=missing");
         return Ok(());
     }
@@ -350,7 +370,3 @@ pub fn thumbnails(force: bool) -> Result {
     crate::thumbs::generate(force)
 }
 
-pub fn ensure_dir(path: &Path) -> Result {
-    fs::create_dir_all(path)?;
-    Ok(())
-}

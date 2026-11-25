@@ -158,7 +158,7 @@ int main(int argc, char **argv) {
             char *args[] = {"rofi", "-show", "drun", "-theme", theme_path, NULL};
             execvp("rofi", args);
         } else if (strcmp(target, "clipboard") == 0) {
-            char theme_path[PATH_MAX], mode_arg[PATH_MAX];
+            char theme_path[PATH_MAX], mode_arg[PATH_MAX + 64];
             snprintf(theme_path, sizeof(theme_path), "%s/rofi/clipboard.rasi", root);
 
             /* Prefer direct execution of compiled zenith-native if available, fallback to clipboard-mode.sh */

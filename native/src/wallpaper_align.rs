@@ -1,23 +1,17 @@
 use crate::config::*;
-use image::{imageops::FilterType, DynamicImage, GenericImageView, Rgb, RgbImage};
+use image::{imageops::FilterType, DynamicImage, GenericImageView};
 use serde_json::Value;
 use std::{fs, path::Path};
 
 pub struct MonitorGeometry {
     pub width: u32,
     pub height: u32,
-    pub scale: f64,
-    pub x: i32,
-    pub y: i32,
 }
 
 pub fn active_monitor() -> MonitorGeometry {
     let mut geom = MonitorGeometry {
         width: 1920,
         height: 1080,
-        scale: 1.0,
-        x: 0,
-        y: 0,
     };
 
     if let Ok(o) = run("hyprctl", &["monitors", "-j"]) {
@@ -27,18 +21,12 @@ pub fn active_monitor() -> MonitorGeometry {
                 .find(|m| m["focused"].as_bool() == Some(true))
                 .or_else(|| a.first())
             {
-                let scale = m["scale"].as_f64().unwrap_or(1.0).max(0.5);
                 let w = m["width"].as_u64().unwrap_or(1920) as u32;
                 let h = m["height"].as_u64().unwrap_or(1080) as u32;
-                let x = m["x"].as_i64().unwrap_or(0) as i32;
-                let y = m["y"].as_i64().unwrap_or(0) as i32;
 
                 geom = MonitorGeometry {
                     width: w,
                     height: h,
-                    scale,
-                    x,
-                    y,
                 };
             }
         }

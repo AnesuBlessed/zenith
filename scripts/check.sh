@@ -57,12 +57,12 @@ log_ok "All native source targets are present."
 # 5. Runtime Commands
 log_info "Checking runtime commands..."
 missing=0
-for cmd in Hyprland quickshell foot rofi thunar firefox swww wl-copy cliphist grim slurp \
+for cmd in Hyprland quickshell foot rofi thunar firefox awww wl-copy cliphist grim slurp \
         wf-recorder jq magick hyprlock hypridle brightnessctl playerctl notify-send; do
     if command -v "$cmd" >/dev/null 2>&1; then
         log_ok "Found: $cmd"
     else
-        log_warn "Command '$cmd' not installed yet (./install.sh provides it)"
+        log_warn "Command '$cmd' not installed; install.sh auto-installs it on the next run"
         missing=$((missing + 1))
     fi
 done

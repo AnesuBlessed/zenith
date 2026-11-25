@@ -1,8 +1,8 @@
 use std::{
     env, fs,
-    io::{self, Write},
+    io,
     path::{Path, PathBuf},
-    process::{Command, Output, Stdio},
+    process::{Command, Output},
 };
 
 pub type Result<T = ()> = std::result::Result<T, Box<dyn std::error::Error>>;
@@ -28,14 +28,6 @@ pub fn state() -> PathBuf {
 
 pub fn cache() -> PathBuf {
     xdg("XDG_CACHE_HOME", ".cache").join("zenith")
-}
-
-pub fn runtime() -> PathBuf {
-    env::var_os("XDG_RUNTIME_DIR")
-        .filter(|s| !s.is_empty())
-        .map(PathBuf::from)
-        .unwrap_or_else(|| cache().join("runtime"))
-        .join("zenith")
 }
 
 pub fn root() -> PathBuf {
@@ -75,10 +67,6 @@ pub fn run(cmd: &str, args: &[&str]) -> io::Result<Output> {
 
 pub fn exists(cmd: &str) -> bool {
     run("which", &[cmd]).is_ok_and(|o| o.status.success())
-}
-
-pub fn uid() -> String {
-    unsafe { libc::getuid().to_string() }
 }
 
 pub fn walk(dir: &Path) -> Vec<PathBuf> {

@@ -101,7 +101,7 @@ fn dispatch(args: &[String]) -> Result {
             println!("  wallpaper set <path> [--transition T] [--duration S] [--monitor M] [--reduced-motion]");
             println!("  wallpaper random                Apply a random wallpaper");
             println!("  wallpaper ensure                Re-apply the last wallpaper (or pick one)");
-            println!("  wallpaper probe                 Report swww daemon availability");
+            println!("  wallpaper probe                 Report wallpaper daemon availability");
             println!("  wallpaper current               Print the active wallpaper path");
             println!("  wallpaper thumbs [--force]      Generate picker thumbnails");
             println!("  theme [refresh|color <#hex>]    Regenerate or override the palette");
