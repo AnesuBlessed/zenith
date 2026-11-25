@@ -10,3 +10,6 @@ target/
 .vscode/
 .idea/
 *.swp
+font_preview.html
+avatar_preview.html
+zlogo_preview.html
