@@ -17,6 +17,13 @@ hl.bind = function(combo, action, opts)
 end
 
 local zenith_ctl = paths.quote(paths.root .. "/build/zenith-ctl")
+local zenith_lock = paths.script("lock.sh")
+
+-- Run compound commands through bash so pipes, && and || never depend on how
+-- the exec dispatcher quotes its argument.
+local function shell(command)
+    return "bash -c " .. paths.quote(command)
+end
 
 -- =====================================================
 -- 1. Window Management
@@ -76,7 +83,7 @@ hl.bind(mainMod .. " + Tab", hl.dsp.exec_cmd(zenith_ctl .. " toggle window"))
 
 -- Clipboard (0ms Anchored Rofi via C zenith-ctl)
 hl.bind(mainMod .. " + V", hl.dsp.exec_cmd(zenith_ctl .. " toggle clipboard"))
-hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd("cliphist wipe"))
+hl.bind(mainMod .. " + SHIFT + C", hl.dsp.exec_cmd(shell("cliphist wipe")))
 
 -- File Manager (Thunar with Phone Cable Sharing Stack)
 hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"))
@@ -85,37 +92,38 @@ hl.bind(mainMod .. " + E", hl.dsp.exec_cmd("thunar"))
 hl.bind(mainMod .. " + B", hl.dsp.exec_cmd("firefox"))
 
 -- Code Editor (Codium - Dedicated Conflict-Free Keybind)
-hl.bind(mainMod .. " + O", hl.dsp.exec_cmd("codium || code"))
+hl.bind(mainMod .. " + O", hl.dsp.exec_cmd(shell("codium || code")))
 
 -- Island Control Center (WiFi, Bluetooth, Settings)
-hl.bind(mainMod .. " + N", hl.dsp.exec_cmd("quickshell ipc call control-center toggle || true"))
-hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd("quickshell ipc call control-center toggle || true"))
-hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd("quickshell ipc call settings open || true"))
-hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd("quickshell ipc call notifications toggle || true"))
+hl.bind(mainMod .. " + N", hl.dsp.exec_cmd(shell("quickshell ipc call control-center toggle")))
+hl.bind(mainMod .. " + SPACE", hl.dsp.exec_cmd(shell("quickshell ipc call control-center toggle")))
+hl.bind(mainMod .. " + comma", hl.dsp.exec_cmd(shell("quickshell ipc call settings open")))
+hl.bind(mainMod .. " + SHIFT + N", hl.dsp.exec_cmd(shell("quickshell ipc call notifications toggle")))
 
 -- Wallpaper picker (standalone hyprquickpaper layouts + native backend)
 hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(zenith_ctl .. " toggle picker"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(paths.bin("zenith-native") .. " wallpaper random"))
 
 -- System & Session (Island Session Overlay)
-hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd("hyprlock"))
-hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd("quickshell ipc call session-page toggle || true"))
-hl.bind(mainMod .. " + R", hl.dsp.exec_cmd("hyprctl reload && " .. paths.bin("zenith-native") .. " align"))
+hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(zenith_lock))
+hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd(shell("quickshell ipc call session-page toggle")))
+hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(shell(
+    "hyprctl reload && " .. paths.quote(paths.root .. "/build/zenith-native") .. " align")))
 
--- Laptop Lid Switch
-hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd("hyprlock"), { locked = true })
+-- Laptop Lid Switch (always route through lock.sh so the SDDM snapshot exists)
+hl.bind("switch:on:Lid Switch", hl.dsp.exec_cmd(zenith_lock), { locked = true })
 hl.bind("switch:off:Lid Switch", hl.dsp.dpms("on"), { locked = true })
 
 -- =====================================================
 -- 3. Media, Audio & Hardware Controls
 -- =====================================================
 -- Screenshots & Region OCR
-hl.bind("Print",               hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | wl-copy"))
-hl.bind("SHIFT + Print",       hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | swappy -f -"))
-hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd("grim - | wl-copy"))
-hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd("quickshell ipc call capture screenshot region copy || true"))
-hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd("quickshell ipc call capture record region || true"))
-hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd("grim -g \"$(slurp)\" - | tesseract - - | wl-copy"))
+hl.bind("Print",               hl.dsp.exec_cmd(shell("grim -g \"$(slurp)\" - | wl-copy")))
+hl.bind("SHIFT + Print",       hl.dsp.exec_cmd(shell("grim -g \"$(slurp)\" - | swappy -f -")))
+hl.bind(mainMod .. " + Print", hl.dsp.exec_cmd(shell("grim - | wl-copy")))
+hl.bind(mainMod .. " + SHIFT + S", hl.dsp.exec_cmd(shell("quickshell ipc call capture screenshot region copy")))
+hl.bind(mainMod .. " + SHIFT + R", hl.dsp.exec_cmd(shell("quickshell ipc call capture record region")))
+hl.bind(mainMod .. " + SHIFT + O", hl.dsp.exec_cmd(shell("grim -g \"$(slurp)\" - | tesseract - - | wl-copy")))
 
 -- Audio Hardware Controls
 hl.bind("XF86AudioRaiseVolume", hl.dsp.exec_cmd("wpctl set-volume @DEFAULT_AUDIO_SINK@ 5%+"),  { locked = true, repeating = true })

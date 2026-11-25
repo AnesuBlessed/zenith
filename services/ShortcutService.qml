@@ -99,8 +99,7 @@ QtObject {
         pendingAction = "reset"
         pendingValue = true
         process.command = [helperPath, "apply", configPath,
-            "true", "true", "true", "true", "true", "true", "true", "true",
-            "true", "true", "true", "true"]
+            "true", "true", "true", "true", "true", "true", "true", "true", "true"]
         process.running = true
     }
 

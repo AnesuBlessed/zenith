@@ -26,7 +26,7 @@ Commands=(
     '"quickshell ipc call notifications toggle"'
     'paths.quote(paths.root .. "/build/zenith-ctl") .. " toggle picker"'
     '"quickshell ipc call control-center toggle"'
-    '"hyprlock"'
+    'paths.quote(paths.root .. "/scripts/lock.sh")'
     '"quickshell ipc call capture screenshot region copy"'
     '"quickshell ipc call capture record region"'
 )

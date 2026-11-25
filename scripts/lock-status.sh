@@ -4,6 +4,7 @@
 # The individual commands feed hyprlock's cmd[update:] labels. `snapshot`
 # writes the same strings into a small QML object that the SDDM greeter loads,
 # so the login screen and the lock screen show the same status widgets.
+# Output is plain text so every label can use Zenith Display.
 
 SNAPSHOT_FILE="/var/lib/zenith/lock-status.qml"
 
@@ -20,31 +21,26 @@ case "$1" in
              cat /sys/class/power_supply/BAT1/status 2>/dev/null)
     [ -z "$LEVEL" ] && exit 0
     if [ "$STATUS" = "Charging" ]; then
-      ICON='󰂄'
-    elif [ "$LEVEL" -ge 90 ]; then ICON='󰁹'
-    elif [ "$LEVEL" -ge 70 ]; then ICON='󰂀'
-    elif [ "$LEVEL" -ge 50 ]; then ICON='󰁾'
-    elif [ "$LEVEL" -ge 30 ]; then ICON='󰁼'
-    elif [ "$LEVEL" -ge 15 ]; then ICON='󰁺'
-    else ICON='󰂃'
+      printf '%s%% charging' "$LEVEL"
+    else
+      printf '%s%%' "$LEVEL"
     fi
-    printf '%s %s%%' "$ICON" "$LEVEL"
     ;;
   wifi)
-    # NetworkManager first (iwgetid needs wireless-tools which many systems lack)
+    # NetworkManager first (iwgetid needs wireless-tools that many systems lack)
     SSID=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')
     [ -z "$SSID" ] && SSID=$(iwgetid -r 2>/dev/null)
     if [ -n "$SSID" ]; then
-      STRENGTH=$(nmcli -t -f IN-USE,SIGNAL dev wifi 2>/dev/null | awk -F: '$2!=""{if($2>max)max=$2}END{print max}')
+      STRENGTH=$(nmcli -t -f IN-SSID,SIGNAL dev wifi 2>/dev/null | awk -F: '{if($2>max)max=$2}END{print max}')
       [ -z "$STRENGTH" ] && STRENGTH=$(awk 'NR==3{print int($3*100/70)}' /proc/net/wireless 2>/dev/null)
-      if [ "${STRENGTH:-0}" -ge 75 ]; then ICON='󰤨'
-      elif [ "${STRENGTH:-0}" -ge 50 ]; then ICON='󰤥'
-      elif [ "${STRENGTH:-0}" -ge 25 ]; then ICON='󰤢'
-      else ICON='󰤟'
+      if [ "${STRENGTH:-0}" -ge 75 ]; then QUALITY=excellent
+      elif [ "${STRENGTH:-0}" -ge 50 ]; then QUALITY=good
+      elif [ "${STRENGTH:-0}" -ge 25 ]; then QUALITY=okay
+      else QUALITY=weak
       fi
-      printf '%s  %s' "$ICON" "$SSID"
+      printf 'WiFi %s (%s)' "$SSID" "$QUALITY"
     else
-      printf '󰤭  No WiFi'
+      printf 'No WiFi'
     fi
     ;;
   weather)
@@ -52,8 +48,8 @@ case "$1" in
     if [ -f "$CACHE" ] && [ "$(find "$CACHE" -mmin -60 2>/dev/null)" ]; then
       cat "$CACHE"
     else
-      # Fetch from wttr.in (brief format: icon + temp + condition)
-      DATA=$(curl -sf --max-time 4 "wttr.in/?format=%c+%t+%C" 2>/dev/null)
+      # Fetch from wttr.in (temp + condition, no icon glyph)
+      DATA=$(curl -sf --max-time 4 "wttr.in/?format=%t+%C" 2>/dev/null)
       if [ -n "$DATA" ]; then
         mkdir -p "$(dirname "$CACHE")"
         printf '%s' "$DATA" > "$CACHE"
@@ -68,9 +64,8 @@ case "$1" in
     [ "$STATUS" = "Playing" ] || [ "$STATUS" = "Paused" ] || exit 0
     ARTIST=$(playerctl metadata artist 2>/dev/null | cut -c1-24)
     TITLE=$(playerctl metadata title 2>/dev/null | cut -c1-28)
-    [ -z "$ARTIST" ] && [ -z "$TITLE" ] && exit 0
-    if [ "$STATUS" = "Playing" ]; then ICON='󰎆'; else ICON='󰏤'; fi
-    printf '%s  %s — %s' "$ICON" "$ARTIST" "$TITLE"
+    [ -z "$ARTIST" ] || [ -z "$TITLE" ] && exit 0
+    printf '%s — %s' "$ARTIST" "$TITLE"
     ;;
   snapshot)
     # Best-effort mirror for the SDDM greeter. The directory is created and

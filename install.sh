@@ -79,7 +79,7 @@ PACKAGES=(
     rofi-wayland cliphist wl-clipboard grim slurp swappy wf-recorder
     # Wallpaper daemon (swww was renamed upstream to awww; identical CLI)
     awww jq imagemagick libnotify fastfetch ffmpeg
-    qt6-5compat qt6-svg
+    qt6-5compat qt6-svg qt6-multimedia-ffmpeg qt6-imageformats
 
     # Audio, network, hardware
     pipewire pipewire-pulse wireplumber playerctl
@@ -177,6 +177,7 @@ fi
 cp -rf "$ROOT_DIR/hypr/." "$CONFIG_HOME/hypr/"
 # Hyprlock does not consistently expand $HOME inside path/cmd values.
 sed -i "s|\$HOME|$HOME|g" "$CONFIG_HOME/hypr/hyprlock.conf"
+sed -i "s|\$HOME|$HOME|g" "$CONFIG_HOME/hypr/hypridle.conf"
 if [[ ! -f "$CONFIG_HOME/zenith/settings.json" ]]; then
     bash "$ROOT_DIR/scripts/shortcutctl.sh" apply >/dev/null 2>&1 \
         || log_warn "Managed shortcuts were not generated; Super + W still opens the picker."
@@ -223,15 +224,15 @@ if [[ -f "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" ]]; then
 fi
 
 # SDDM greeter theme (login screen mirrors the lock screen)
-if [[ -d "$ROOT_DIR/sddm/zenith" ]]; then
-    grep -q '^\[SddmGreeterTheme\]' "$ROOT_DIR/sddm/zenith/metadata.desktop" \
+if [[ -d "$ROOT_DIR/sddm/silent" ]]; then
+    grep -q '^\[SddmGreeterTheme\]' "$ROOT_DIR/sddm/silent/metadata.desktop" \
         || die "SDDM theme metadata is missing the [SddmGreeterTheme] group"
-    grep -q '^QtVersion=6' "$ROOT_DIR/sddm/zenith/metadata.desktop" \
+    grep -q '^QtVersion=6' "$ROOT_DIR/sddm/silent/metadata.desktop" \
         || die "SDDM theme must declare QtVersion=6 on Arch"
 
     sudo mkdir -p /usr/share/sddm/themes /etc/sddm.conf.d /var/lib/zenith
     sudo rm -rf /usr/share/sddm/themes/zenith
-    sudo cp -r "$ROOT_DIR/sddm/zenith" /usr/share/sddm/themes/
+    sudo cp -r "$ROOT_DIR/sddm/silent" /usr/share/sddm/themes/
     sudo chmod -R a+rX /usr/share/sddm/themes/zenith
     sudo tee /etc/sddm.conf.d/zenith-theme.conf >/dev/null <<'CONF'
 [Theme]
@@ -285,22 +286,35 @@ QML
         sudo chmod 644 /var/lib/zenith/palette.qml
     fi
 
-    if [[ -f "$ROOT_DIR/sddm/zenith/avatar.png" ]]; then
-        sudo cp -f "$ROOT_DIR/sddm/zenith/avatar.png" /var/lib/zenith/avatar.png
-        sudo chmod 644 /var/lib/zenith/avatar.png
+    # Wallpaper avatar: a centre crop shared by hyprlock and the greeter.
+    avatar_source=""
+    if [[ -f "$CACHE_HOME/zenith/wall.lock.png" ]]; then
+        avatar_source="$CACHE_HOME/zenith/wall.lock.png"
+    else
+        avatar_source=$(find "$ROOT_DIR/wallpapers" -type f \
+            \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null \
+            | sort | head -n1 || true)
+    fi
+    if [[ -n "$avatar_source" ]] && command -v magick >/dev/null 2>&1; then
+        mkdir -p "$CACHE_HOME/zenith"
+        avatar_tmp="$CACHE_HOME/zenith/avatar-install.png"
+        if magick "$avatar_source" -auto-orient \
+                -resize 256x256^ -gravity center -extent 256x256 \
+                "$avatar_tmp" >/dev/null 2>&1; then
+            mv -f "$avatar_tmp" "$CACHE_HOME/zenith/avatar.png"
+            sudo cp -f "$CACHE_HOME/zenith/avatar.png" /var/lib/zenith/avatar.png
+            sudo chmod 644 /var/lib/zenith/avatar.png
+            # The greeter reads the user's face icon from ~/.face.icon
+            cp -f "$CACHE_HOME/zenith/avatar.png" "$HOME/.face.icon"
+            chmod 644 "$HOME/.face.icon" >/dev/null 2>&1 || true
+        else
+            rm -f "$avatar_tmp" 2>/dev/null || true
+        fi
     fi
     sh "$ROOT_DIR/scripts/lock-status.sh" snapshot >/dev/null 2>&1 || true
 
     sudo fc-cache -f >/dev/null 2>&1 || true
     log_ok "SDDM greeter deployed (login screen matches the lock screen)."
-fi
-
-# Avatar placeholder for hyprlock
-AVATAR="$CONFIG_HOME/zenith/assets/avatar.png"
-if [[ ! -s "$AVATAR" ]]; then
-    magick -size 200x200 xc:'#a899e6' -fill '#1b1226' -font DejaVu-Sans-Bold \
-        -pointsize 96 -gravity center -annotate 0 'Z' "$AVATAR" 2>/dev/null \
-        || magick -size 200x200 xc:'#a899e6' "$AVATAR"
 fi
 
 # -----------------------------------------------------------------------------

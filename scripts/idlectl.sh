@@ -80,10 +80,10 @@ case "$cmd" in
 
     remove)
         if [[ -f "$CONFIG" ]] && grep -qF "$MARKER" "$CONFIG"; then
-            cat > "$CONFIG" <<'DEFAULT'
+            cat > "$CONFIG" <<DEFAULT
 # Zenith idle defaults — manual control restored.
 general {
-  lock_cmd = hyprlock
+  lock_cmd = $HOME/.config/zenith/scripts/lock.sh
   before_sleep_cmd = loginctl lock-session
   after_sleep_cmd = hyprctl dispatch dpms on
 }

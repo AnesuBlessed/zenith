@@ -26,6 +26,8 @@ case "$cmd" in
         ;;
 
     lock)
+        lock_helper="${ZENITH_ROOT:-$HOME/.config/zenith}/scripts/lock.sh"
+        if [[ -x "$lock_helper" ]]; then exec "$lock_helper"; fi
         if have hyprlock; then exec hyprlock; fi
         loginctl lock-session
         ;;

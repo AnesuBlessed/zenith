@@ -1,0 +1,16 @@
+; Zenith greeter — SilentSDDM engine, Zenith Display font, rei video background
+
+[SddmGreeterTheme]
+Name=Zenith
+Type=sddm-theme
+Description=Zenith greeter on the SilentSDDM engine (GPL-3.0-or-later upstream).
+License=GPL-3.0-or-later
+Version=1.0.0
+Theme-Id=zenith
+Theme-API=2.0
+MainScript=Main.qml
+QtVersion=6
+
+ConfigFile=configs/zenith.conf
+singleton Config components/Config.qml
+singleton Languages components/Languages.qml

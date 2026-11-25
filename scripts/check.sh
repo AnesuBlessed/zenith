@@ -76,26 +76,42 @@ done
 
 # 6. SDDM greeter theme
 log_info "Validating SDDM greeter theme..."
-sddm_theme="$ZENITH_ROOT/sddm/zenith"
+sddm_theme="$ZENITH_ROOT/sddm/silent"
 metadata="$sddm_theme/metadata.desktop"
-[[ -f "$metadata" ]] || log_fail "Missing sddm/zenith/metadata.desktop"
+[[ -f "$metadata" ]] || log_fail "Missing sddm/silent/metadata.desktop"
 grep -q '^\[SddmGreeterTheme\]' "$metadata" \
     || log_fail "SDDM metadata must use the [SddmGreeterTheme] group"
 grep -q '^MainScript=Main.qml' "$metadata" \
     || log_fail "SDDM metadata is missing MainScript=Main.qml"
 grep -q '^QtVersion=6' "$metadata" \
     || log_fail "SDDM metadata must declare QtVersion=6"
-[[ -f "$sddm_theme/Main.qml" ]] || log_fail "Missing sddm/zenith/Main.qml"
-[[ -f "$sddm_theme/theme.conf" ]] || log_fail "Missing sddm/zenith/theme.conf"
-if grep -Eq 'sddm\.last(Session|User)|sddm\.login\([^)]*currentSession' "$sddm_theme/Main.qml"; then
-    log_fail "SDDM Main.qml still uses obsolete greeter proxy properties/arguments"
+[[ -f "$sddm_theme/Main.qml" ]] || log_fail "Missing sddm/silent/Main.qml"
+grep -q 'Theme-Id=zenith' "$metadata" \
+    || log_fail "SDDM metadata must declare Theme-Id=zenith"
+[[ -f "$sddm_theme/components/Config.qml" ]] \
+    || log_fail "Missing SilentSDDM engine (components/Config.qml)"
+[[ -f "$sddm_theme/components/LoginScreen.qml" ]] \
+    || log_fail "Missing SilentSDDM LoginScreen component"
+
+# Our theme is wired through metadata.desktop -> configs/zenith.conf and
+# uses Zenith Display everywhere the rei preset set RedHatDisplay.
+grep -q '^ConfigFile=configs/zenith.conf' "$metadata" \
+    || log_fail "SDDM metadata must point ConfigFile at configs/zenith.conf"
+[[ -f "$sddm_theme/configs/zenith.conf" ]] \
+    || log_fail "Missing sddm/silent/configs/zenith.conf"
+grep -q 'font-family = "Zenith Display"' "$sddm_theme/configs/zenith.conf" \
+    || log_fail "Zenith greeter config does not use Zenith Display"
+[[ -f "$sddm_theme/backgrounds/rei.mp4" ]] \
+    || log_fail "Missing SilentSDDM Rei background video"
+[[ -f "$sddm_theme/backgrounds/rei.png" ]] \
+    || log_fail "Missing Rei poster fallback"
+grep -q 'import QtMultimedia' "$sddm_theme/Main.qml" \
+    || log_fail "SDDM greeter has no QtMultimedia video support"
+if grep -q 'lock-power' "$ZENITH_ROOT/hypr/hyprlock.conf"; then
+    log_fail "hyprlock still contains the removed power popup"
 fi
-if ! grep -q 'readonly property string displayFont: "Zenith Display"' "$sddm_theme/Main.qml"; then
-    log_fail "SDDM greeter no longer uses Zenith Display as its display font"
-fi
-if ! grep -q 'file:///var/lib/zenith/palette.qml' "$sddm_theme/Main.qml"; then
-    log_fail "SDDM greeter is not consuming the Rust-generated shared palette"
-fi
+grep -q 'fade_on_empty = false' "$ZENITH_ROOT/hypr/hyprlock.conf" \
+    || log_fail "hyprlock password field is not always visible"
 log_ok "SDDM theme source is structurally valid."
 
 if [[ -d /usr/share/sddm/themes/zenith ]]; then
