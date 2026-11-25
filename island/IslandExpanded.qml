@@ -11,15 +11,18 @@ Item {
     property var monitor
     property string page: "overview"
     property bool active: false
-    property alias settingsSection: settingsPage.section
+    // Stored on the root (not aliased) so Island can write it even while
+    // the settings page is unloaded; the page binds to it on creation.
+    property string settingsSection: ""
     readonly property bool overviewOpen: page === "overview"
     readonly property bool notificationsOpen: page === "notifications"
     readonly property bool captureOpen: page === "capture"
     readonly property bool sessionOpen: page === "session"
     readonly property bool settingsOpen: page === "settings"
     readonly property bool settingsLivePreviewActive: active && settingsOpen
-        && settingsPage.livePreviewActive
-    readonly property string settingsPreviewMode: settingsPage.pillPreviewMode
+        && (settingsLoader.item ? settingsLoader.item.livePreviewActive : false)
+    readonly property string settingsPreviewMode:
+        settingsLoader.item ? settingsLoader.item.pillPreviewMode : ""
     readonly property bool controlCenterOpen: page === "control-center"
     readonly property bool clipboardOpen: page === "clipboard"
     readonly property bool identityPickerOpen: page === "identity-image"
@@ -27,13 +30,21 @@ Item {
     readonly property bool insightOpen: page === "weather" || page === "calendar"
         || page === "media-center" || page === "system" || page === "battery"
     readonly property bool controlCenterDetailOpen:
-        controlCenterOpen && controlCenter.detailOpen
+        controlCenterOpen && controlCenterLoader.item
+            && controlCenterLoader.item.detailOpen
     readonly property real controlCenterDetailProgress:
-        controlCenterOpen ? controlCenter.detailProgress : 0
+        (controlCenterOpen && controlCenterLoader.item)
+            ? controlCenterLoader.item.detailProgress : 0
     readonly property bool controlCenterDetailTransitionActive:
-        controlCenterOpen && controlCenter.detailTransitionActive
+        (controlCenterOpen && controlCenterLoader.item)
+            && controlCenterLoader.item.detailTransitionActive
     signal pageSelected(string selectedPage)
     signal dismissRequested(bool forceDormant)
+
+    // Wake the SystemService metrics timers only while a page that shows
+    // them (overview / insights) is actually on screen.
+    Component.onCompleted: SystemService.consumerVisible = Qt.binding(
+        () => root.overviewOpen || root.insightOpen)
 
     function openIdentityPicker(): void {
         if (identityPickerOpen) {
@@ -55,9 +66,11 @@ Item {
             closeIdentityPicker()
             return true
         }
-        if (sessionOpen && sessionPage.cancelConfirmation())
+        const session = sessionLoader.item
+        if (sessionOpen && session && session.cancelConfirmation())
             return true
-        if (controlCenterOpen && controlCenter.closeExpandedSection())
+        const control = controlCenterLoader.item
+        if (controlCenterOpen && control && control.closeExpandedSection())
             return true
         return false
     }
@@ -271,73 +284,118 @@ Item {
             }
         }
 
-        NotificationCenter {
-            visible: root.notificationsOpen
+        // Every page below is lazy: the Loader only builds the component
+        // tree while its page is open. Idle RAM and startup time drop by
+        // the combined weight of the unloaded pages; the cost is one frame
+        // of build time on a page's first open. The overview Dashboard is
+        // the resting page, so it still loads immediately.
+
+        Loader {
+            active: root.notificationsOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
+            sourceComponent: NotificationCenter {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
         }
 
-        CapturePage {
-            visible: root.captureOpen
+        Loader {
+            active: root.captureOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            monitor: root.monitor
-            onDismissRequested: forceDormant =>
-                root.dismissRequested(forceDormant)
+            sourceComponent: CapturePage {
+                monitor: root.monitor
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onDismissRequested: forceDormant =>
+                    root.dismissRequested(forceDormant)
+            }
         }
 
-        SessionPage {
-            id: sessionPage
-            visible: root.sessionOpen
+        Loader {
+            id: sessionLoader
+            active: root.sessionOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            onDismissRequested: root.dismissRequested(false)
+            sourceComponent: SessionPage {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onDismissRequested: root.dismissRequested(false)
+            }
         }
 
-        SettingsPage {
-            id: settingsPage
-            visible: root.settingsOpen
+        Loader {
+            id: settingsLoader
+            active: root.settingsOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            monitor: root.monitor
+            sourceComponent: SettingsPage {
+                section: root.settingsSection
+                onSectionChanged: root.settingsSection = section
+                monitor: root.monitor
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
         }
 
-        Dashboard {
-            visible: root.overviewOpen
+        Loader {
+            active: root.overviewOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            onPageRequested: page => root.pageSelected(page)
+            sourceComponent: Dashboard {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onPageRequested: page => root.pageSelected(page)
+            }
         }
 
-        ControlCenter {
-            id: controlCenter
-            visible: root.controlCenterOpen
+        Loader {
+            id: controlCenterLoader
+            active: root.controlCenterOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
+            sourceComponent: ControlCenter {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+            }
         }
 
-        InsightCenter {
-            visible: root.insightOpen
+        Loader {
+            active: root.insightOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            selectedPage: root.page
-            onPageRequested: page => root.pageSelected(page)
+            sourceComponent: InsightCenter {
+                selectedPage: root.page
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onPageRequested: page => root.pageSelected(page)
+            }
         }
 
-        WallpaperPage {
-            visible: root.identityPickerOpen
+        Loader {
+            active: root.identityPickerOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            monitor: root.monitor
-            selectionMode: root.identityPickerOpen
-            onSelectionCompleted: root.closeIdentityPicker()
-            onCancelRequested: root.closeIdentityPicker()
+            sourceComponent: WallpaperPage {
+                monitor: root.monitor
+                selectionMode: true
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onSelectionCompleted: root.closeIdentityPicker()
+                onCancelRequested: root.closeIdentityPicker()
+            }
         }
-        ClipboardPage {
-            visible: root.clipboardOpen
+
+        Loader {
+            active: root.clipboardOpen
             Layout.fillWidth: true
             Layout.fillHeight: true
-            onCloseRequested: root.pageSelected("overview")
+            sourceComponent: ClipboardPage {
+                Layout.fillWidth: true
+                Layout.fillHeight: true
+                onCloseRequested: root.pageSelected("overview")
+            }
         }
     }
 }

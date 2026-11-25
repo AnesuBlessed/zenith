@@ -114,37 +114,45 @@ false` keeps the trees alive (they still render nothing), which costs some
 memory but zero GPU while dormant — the layout/binding state is preserved,
 making page switches instant.
 
-### Recommended next (documented, not yet applied — they change UX timing)
+### Recommended next (26–28 and 30 applied in the same pass)
 
 26. **Lazy-load island pages with `Loader`.** All eight expanded pages
 (NotificationCenter, CapturePage, SessionPage, SettingsPage, Dashboard,
 ControlCenter, InsightCenter, WallpaperPage) are built at startup in
 `island/IslandExpanded.qml`. Wrapping each in `Loader { active: <pageOpen> }`
 would cut quickshell startup time and idle RSS meaningfully (each page is
-200–700 lines of QML with its own images/effects). Trade-off: ~one frame of
-delay on first page open. Because page `id`s are referenced by the
-controller, this needs a careful pass — do it one page at a time.
+200–700 lines of QML with its own images/effects). **Applied:** every page
+in `island/IslandExpanded.qml` is now a `Loader { active: <pageOpen> }`;
+`settingsSection`, the control-center detail state and `closeTransientUi()`
+were rewired through the loader items so Island.qml's write/read paths keep
+working. Trade-off paid: ~one frame of build time on a page's first open.
 
 27. **Gate the 2 s metrics timer on island visibility.** `fastTimer` runs
 even when the dashboard is closed. Binding `running: root.overviewOpen`
-(and an on-close flush) makes the idle loop fully dormant. Needs the same
-service↔island wiring as #26.
+(and an on-close flush) makes the idle loop fully dormant. **Applied:**
+`SystemService.consumerVisible` gates all three metrics timers; IslandExpanded
+binds it to `overviewOpen || insightOpen`. First open of the dashboard
+triggers an immediate refresh via `triggeredOnStart`.
 
-28. **`WallpaperService.healthTimer` spawns a process every 20 s.** A
-`wallpaper probe` costs ~2–3 ms CPU, so it is tolerable, but the cleaner
-design is an event: awww's socket state → one-shot probe on failure only.
+28. **`WallpaperService.healthTimer` spawns a process every 20 s.**
+**Applied:** the timer is now recovery-only (`running: backendState !==
+"ready"`), so a healthy session spawns zero steady-state probes; a dead
+daemon is caught by the next operation erroring, which re-arms the timer.
 
 29. **Audio/battery/bluetooth poll processes 1–2× per second.**
-`AudioService` (900 ms), `BatteryService` (900 ms), `BluetoothService`
-(400–1800 ms) each shell out. Native replacements (a single C daemon
-reading `upower`/`pactl`/`bluetoothctl` d-bus signals) would remove the
-per-poll fork cost entirely. Real win: ~0.5–1 % CPU and some context-switch
-noise; do it only after #26/#27.
+**Correction on re-inspection:** the timers found (400–1800 ms) are one-shot
+operation sequencers (startup guards, pairing flow steps), not recurring
+polls. The recurring state flows are already event-driven — PipeWire events
+for audio, UPower signals for battery, bluetoothctl watch for devices.
+No change needed; a native daemon would only save fork overhead we do not
+currently pay.
 
 30. **CPU blur in Rust on wallpaper transactions.** `wallpaper_align.rs`
-runs a full-monitor `blur(14.0)` on the CPU for every wallpaper change
-(lock/launcher/clipboard crops). One-shot cost (~200–600 ms on the N4000),
-not idle cost. If it ever matters, downscale → blur → upscale halves it.
+ran full-resolution Gaussian blurs for the lock background, clipboard crop
+and launcher rail on every wallpaper change (~200–600 ms on the N4000).
+**Applied:** `blur_sharpness_respecting_size()` downscales ×3, blurs at
+radius/3, upscales back — visually equivalent (the upscale adds smoothness)
+and roughly 3× faster.
 
 ### RAM budget reality check
 

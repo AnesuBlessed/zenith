@@ -302,9 +302,14 @@ QtObject {
         onLoadFailed: root.gpuUsageAvailable = false
     }
 
+    // Set by IslandExpanded: true while the overview Dashboard or one of the
+    // insight pages is on screen. While false every metrics timer below is
+    // fully dormant — /proc reads and the disk query stop entirely.
+    property bool consumerVisible: false
+
     property Timer fastTimer: Timer {
         interval: Config.system.metricsInterval
-        running: true
+        running: root.consumerVisible
         repeat: true
         triggeredOnStart: true
         onTriggered: root.refreshFastMetrics()
@@ -312,7 +317,7 @@ QtObject {
 
     property Timer temperatureTimer: Timer {
         interval: Config.system.temperatureInterval
-        running: true
+        running: root.consumerVisible
         repeat: true
         triggeredOnStart: true
         onTriggered: {
@@ -326,7 +331,7 @@ QtObject {
 
     property Timer storageTimer: Timer {
         interval: Config.system.storageInterval
-        running: true
+        running: root.consumerVisible
         repeat: true
         triggeredOnStart: true
         onTriggered: {

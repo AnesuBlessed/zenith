@@ -35,6 +35,22 @@ pub fn active_monitor() -> MonitorGeometry {
 }
 
 /// Computes the exact 1:1 pixel crops for the centered launcher and top-right clipboard.
+/// Gaussian blur at full resolution is the most expensive step of every
+/// wallpaper transaction (hundreds of ms on the N4000 for the full monitor).
+/// Downscaling first, blurring, then upscaling produces the same soft wash —
+/// the up-scale itself acts as another smoothing pass — at a fraction of
+/// the cost.
+fn blur_sharpness_respecting_size(image: &DynamicImage, radius: f32) -> DynamicImage {
+    const DOWNSCALE: u32 = 3;
+    let (w, h) = image.dimensions();
+    let small_w = (w / DOWNSCALE).max(8);
+    let small_h = (h / DOWNSCALE).max(8);
+    image
+        .resize_exact(small_w, small_h, FilterType::Triangle)
+        .blur(radius / DOWNSCALE as f32)
+        .resize_exact(w, h, FilterType::Triangle)
+}
+
 pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let mon = active_monitor();
     let cache_dir = cache();
@@ -90,9 +106,8 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
 
     // B. Frosted Glass Vertical Rail (56px width with edge-padded Gaussian blur)
     let rail_w = 56u32.min(screen.width()).max(1);
-    let rail_slice = screen
-        .crop_imm(launcher_crop_x, launcher_crop_y, rail_w, launcher_h)
-        .blur(10.0);
+    let rail_slice = blur_sharpness_respecting_size(
+        &screen.crop_imm(launcher_crop_x, launcher_crop_y, rail_w, launcher_h), 10.0);
     
     // Subtle dark tint for glass depth
     let mut rail_tinted = rail_slice.to_rgba8();
@@ -117,9 +132,8 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let clip_crop_x = (clip_x + delta_x).min(screen.width().saturating_sub(clip_w));
     let clip_crop_y = (clip_y + delta_y).min(screen.height().saturating_sub(clip_h));
 
-    let clip_slice = screen
-        .crop_imm(clip_crop_x, clip_crop_y, clip_w, clip_h)
-        .blur(12.0);
+    let clip_slice = blur_sharpness_respecting_size(
+        &screen.crop_imm(clip_crop_x, clip_crop_y, clip_w, clip_h), 12.0);
     let clip_slice_path = cache_dir.join("wall.clipboard.png");
     save_atomic(&clip_slice, &clip_slice_path)?;
 
@@ -142,18 +156,17 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
         .crop_imm(strip_sx, strip_sy, frame_w, strip_h);
     save_atomic(&clip_frame, &cache_dir.join("wall.clipboard.frame.png"))?;
 
-    let clip_blur = screen
-        .crop_imm(strip_sx, strip_sy, box_w, strip_h)
-        .blur(10.0);
+    let clip_blur = blur_sharpness_respecting_size(
+        &screen.crop_imm(strip_sx, strip_sy, box_w, strip_h), 10.0);
     save_atomic(&DynamicImage::ImageRgba8(clip_blur.to_rgba8()),
         &cache_dir.join("wall.clipboard.blur.png"))?;
 
     // 5. Lock screen background: the full monitor, blurred and dimmed.
     //    Hyprlock needs a real image file — pointing it at a state text file
     //    renders as a black screen.
-    let lock_bg = screen
-        .crop_imm(0, 0, mon.width.min(screen.width()), mon.height.min(screen.height()))
-        .blur(14.0);
+    let lock_bg = blur_sharpness_respecting_size(
+        &screen.crop_imm(0, 0, mon.width.min(screen.width()),
+            mon.height.min(screen.height())), 14.0);
     let mut lock_tinted = lock_bg.to_rgba8();
     for p in lock_tinted.pixels_mut() {
         p[0] = (p[0] as f32 * 0.62) as u8;

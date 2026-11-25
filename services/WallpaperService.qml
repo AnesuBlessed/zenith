@@ -395,13 +395,14 @@ QtObject {
     }
 
     property Timer healthTimer: Timer {
+        // Recovery-only polling: while the renderer is ready we trust it —
+        // a dead awww daemon surfaces as an error on the next operation and
+        // flips state, which re-arms this timer. No steady-state process
+        // spawns every 20 seconds.
         interval: 20000
         repeat: true
-        running: true
-        onTriggered: {
-            if (!root.busy && !root.applying)
-                root.beginOperation("probe", [root.helperPath, "wallpaper", "probe"])
-        }
+        running: root.backendState !== "ready" && !root.busy && !root.applying
+        onTriggered: root.bootstrap(false)
     }
 
     property Timer recoveryTimer: Timer {
