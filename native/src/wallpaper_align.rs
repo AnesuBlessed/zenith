@@ -74,8 +74,9 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
 
     let pane_w = pane_w.min(screen.width()).max(1);
     let launcher_h = win_h.min(screen.height()).max(1);
-    let launcher_crop_x = (win_x + delta_x).min(screen.width().saturating_sub(pane_w));
-    let launcher_crop_y = (win_y + delta_y).min(screen.height().saturating_sub(launcher_h));
+    // The banner background starts inside the window's 2px border (padding is 0).
+    let launcher_crop_x = (win_x + 2 + delta_x).min(screen.width().saturating_sub(pane_w));
+    let launcher_crop_y = (win_y + 2 + delta_y).min(screen.height().saturating_sub(launcher_h));
 
     // A. 1:1 Exact crisp wallpaper slice for left banner
     let launcher_slice = screen.crop_imm(launcher_crop_x, launcher_crop_y, pane_w, launcher_h);
@@ -120,13 +121,13 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     // ---------------------------------------------------------------------
     // 4. Clipboard wallpaper strips (rofi clipboard.rasi geometry)
     //    Window: 360px at north-east (x-offset -12px, y-offset 36px, 2px
-    //    border, 0.5em mainbox padding, 10px em). The 50x36 frame gets a
-    //    crisp 1:1 slice like the launcher banner; the 346x36 wallbox gets
+    //    border, 0.5em mainbox padding, 10px em). The 50x38 frame gets a
+    //    crisp 1:1 slice like the launcher banner; the 346x38 wallbox gets
     //    a matching blurred slice instead of a squeezed full crop.
     // ---------------------------------------------------------------------
     let strip_y = 43u32;
     let frame_w = 50u32;
-    let strip_h = 36u32;
+    let strip_h = 38u32;
     let box_w = 346u32;
     let strip_sx = ((mon.width.saturating_sub(365)) + delta_x)
         .min(screen.width().saturating_sub(frame_w));
