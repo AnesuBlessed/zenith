@@ -109,7 +109,7 @@ Item {
             TextButton {
                 Layout.preferredHeight: 34
                 compact: true
-                text: "󰃻"
+                text: "󰃢"
                 labelFontFamily: Config.appearance.monoFontFamily
                 // Wipes the whole history immediately — no confirmation step.
                 enabled: ClipboardService.entries.length > 0

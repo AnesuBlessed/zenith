@@ -47,7 +47,7 @@ wallbox {
     expand:                      false;
     orientation:                 horizontal;
     background-color:            transparent;
-    background-image:            url("~/.cache/zenith/wall.launcher.blur.png", width);
+    background-image:            url("~/.cache/zenith/wall.clipboard.blur.png", both);
     border-radius:               0.8em;
     children:                    [ "wallframe" , "inputbar" ];
 }
@@ -58,7 +58,7 @@ wallframe {
     padding:                     0em;
     expand:                      false;
     background-color:            transparent;
-    background-image:            url("~/.cache/zenith/wall.clipboard.png", width);
+    background-image:            url("~/.cache/zenith/wall.clipboard.frame.png", both);
     border-radius:               0.8em 0em 0em 0.8em;
 }
 
@@ -137,7 +137,7 @@ element-text {
 }
 
 button-wipe {
-    content:                     "󰃻";
+    content:                     "󰃢";
     action:                      "kb-custom-2";
     expand:                      false;
     vertical-align:              0.5;

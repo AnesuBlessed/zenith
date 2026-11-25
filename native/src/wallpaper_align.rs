@@ -117,6 +117,31 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let clip_slice_path = cache_dir.join("wall.clipboard.png");
     save_atomic(&clip_slice, &clip_slice_path)?;
 
+    // ---------------------------------------------------------------------
+    // 4. Clipboard wallpaper strips (rofi clipboard.rasi geometry)
+    //    Window: 360px at north-east (x-offset -12px, y-offset 36px, 2px
+    //    border, 0.5em mainbox padding, 10px em). The 50x36 frame gets a
+    //    crisp 1:1 slice like the launcher banner; the 346x36 wallbox gets
+    //    a matching blurred slice instead of a squeezed full crop.
+    // ---------------------------------------------------------------------
+    let strip_y = 43u32;
+    let frame_w = 50u32;
+    let strip_h = 36u32;
+    let box_w = 346u32;
+    let strip_sx = ((mon.width.saturating_sub(365)) + delta_x)
+        .min(screen.width().saturating_sub(frame_w));
+    let strip_sy = (strip_y + delta_y).min(screen.height().saturating_sub(strip_h));
+
+    let clip_frame = screen
+        .crop_imm(strip_sx, strip_sy, frame_w, strip_h);
+    save_atomic(&clip_frame, &cache_dir.join("wall.clipboard.frame.png"))?;
+
+    let clip_blur = screen
+        .crop_imm(strip_sx, strip_sy, box_w, strip_h)
+        .blur(10.0);
+    save_atomic(&DynamicImage::ImageRgba8(clip_blur.to_rgba8()),
+        &cache_dir.join("wall.clipboard.blur.png"))?;
+
     Ok(())
 }
 
