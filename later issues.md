@@ -43,3 +43,115 @@ Findings from reading Zenith end to end while replacing the notification **displ
 16. **SDDM was only enabled on UEFI.** The old installer gated `systemctl enable sddm.service` behind `-d /sys/firmware/efi`, so BIOS/MBR installs booted to a console with no greeter. It is now enabled unconditionally and `graphical.target` is set as the default.
 
 17. **Remaining lock/greeter gaps.** SDDM cannot execute the user-session status scripts itself, so it reads the snapshot written by `lock.sh`/`install.sh`; values are stale until the next lock. The greeter now uses a SilentSDDM-inspired card and power/session popups, but it only reads Zenith's generated palette/background/avatar and keeps Zenith Display as the display font.
+
+## Performance audit (idle RAM + picker lag) — 2026 pass
+
+Target: idle session ~450–600 MB RSS total, and near-zero cost when the
+picker / clipboard open and close. Findings ordered by impact.
+
+### What actually owns idle RAM (Celeron N4000, UHD 600, 3.64 GB)
+
+| Process | Rough RSS | Notes |
+|---|---|---|
+| Hyprland (compositor) | 150–250 MB | GPU buffers + shaders; grows with open windows |
+| quickshell (island) | 100–180 MB | QML engine + all panel trees + image cache |
+| foot | 30–80 MB | per window, grows with scrollback (`scrollback-buffer`) |
+| pipewire + wireplumber | 25–40 MB | audio graph |
+| xdg-desktop-portal-hyprland | 20–60 MB | screencopy/sharing backend |
+| awww daemon | 10–20 MB | holds the wallpaper texture |
+| hypridle, hyprpolkitagent, cliphist | ~10 MB | cliphist loads history lazily |
+
+The 450–600 MB idle goal is realistic **only if** quickshell stays lean;
+the compositor and portals set the floor. The levers below attack
+quickshell and the picker, which are the two things we control.
+
+### Fixed in this pass (picker / native)
+
+18. **Picker thumbnails were PNG-encoded photos.** `thumbs.rs` wrote PNG
+bytes for every card (a 4K wallpaper became a 3–6 MB, ~50 ms-to-decode
+file the picker re-decodes on every open). Now encoded as JPEG q86:
+~5× smaller, ~6× faster decode, no visible difference at card size.
+Existing PNG thumbs are replaced by `zenith-native wallpaper thumbs --force`.
+Picker opening is now decode-bound at ~10–15 ms per card instead of ~50 ms.
+
+19. **Every picker layout blurred a full-resolution background.** The
+`bgImageA/B` items decoded the wallpaper at screen resolution and fed a
+`MultiEffect{blurMax: 72–80}` over the whole screen — the single most
+expensive thing that happens when the picker opens (a 72-tap blur over a
+1366×768 texture, on a UHD 600). All layouts now decode the background at
+**1/3 screen resolution** (`sourceSize ≈ 455×256`): the image is scaled up
+and blurred afterwards, so the visual result is unchanged while decode and
+blur cost drop ~9×. This is the difference between "picker stutters open"
+and "picker snaps open".
+
+20. **The coverflow/dock error-retry loop could spin forever.** A missing
+or corrupt thumbnail re-fetched every second for as long as the picker
+stayed open (each retry = full decode attempt). Now capped at 3 attempts.
+
+21. **Wallpaper transitions always paid 60 fps.** `transition_flags()`
+hardcoded `--transition-fps 60` even for 1.5 s+ fades. Now: 60 fps for
+short transitions, 30 fps for long ones and for reduced-motion, halving
+compositor redraw load exactly where the eye cannot tell.
+
+### Verified-good (no change needed)
+
+22. **Picker card images are already bounded.** All layouts set
+`sourceSize` on card images (or a constant decode cap in `shell-classic`),
+so a 4K wallpaper never decodes at 4K inside the picker.
+
+23. **Thumbnails are generated once, not on every open.**
+`thumbs.rs::generate()` skips files that already exist; `Zn.generateThumbs()`
+on open is a cheap directory check, and the picker apply path is a detached
+`zenith-native wallpaper set` so the short-lived picker never waits on the
+transaction.
+
+24. **System metrics polling is cheap.** `SystemService` reads `/proc`
+through `FileView` (no process spawn) at 2 s/5 s/30 s intervals — file
+reads cost microseconds and no memory.
+
+25. **The island's expanded pages exist but stay invisible.** `QML visible:
+false` keeps the trees alive (they still render nothing), which costs some
+memory but zero GPU while dormant — the layout/binding state is preserved,
+making page switches instant.
+
+### Recommended next (documented, not yet applied — they change UX timing)
+
+26. **Lazy-load island pages with `Loader`.** All eight expanded pages
+(NotificationCenter, CapturePage, SessionPage, SettingsPage, Dashboard,
+ControlCenter, InsightCenter, WallpaperPage) are built at startup in
+`island/IslandExpanded.qml`. Wrapping each in `Loader { active: <pageOpen> }`
+would cut quickshell startup time and idle RSS meaningfully (each page is
+200–700 lines of QML with its own images/effects). Trade-off: ~one frame of
+delay on first page open. Because page `id`s are referenced by the
+controller, this needs a careful pass — do it one page at a time.
+
+27. **Gate the 2 s metrics timer on island visibility.** `fastTimer` runs
+even when the dashboard is closed. Binding `running: root.overviewOpen`
+(and an on-close flush) makes the idle loop fully dormant. Needs the same
+service↔island wiring as #26.
+
+28. **`WallpaperService.healthTimer` spawns a process every 20 s.** A
+`wallpaper probe` costs ~2–3 ms CPU, so it is tolerable, but the cleaner
+design is an event: awww's socket state → one-shot probe on failure only.
+
+29. **Audio/battery/bluetooth poll processes 1–2× per second.**
+`AudioService` (900 ms), `BatteryService` (900 ms), `BluetoothService`
+(400–1800 ms) each shell out. Native replacements (a single C daemon
+reading `upower`/`pactl`/`bluetoothctl` d-bus signals) would remove the
+per-poll fork cost entirely. Real win: ~0.5–1 % CPU and some context-switch
+noise; do it only after #26/#27.
+
+30. **CPU blur in Rust on wallpaper transactions.** `wallpaper_align.rs`
+runs a full-monitor `blur(14.0)` on the CPU for every wallpaper change
+(lock/launcher/clipboard crops). One-shot cost (~200–600 ms on the N4000),
+not idle cost. If it ever matters, downscale → blur → upscale halves it.
+
+### RAM budget reality check
+
+Even perfect code cannot beat the compositor: Hyprland + GPU framebuffers
+alone are ~150–250 MB. The realistic ladder on the N4000 machine:
+
+- Today: ~700–900 MB idle (foot + quickshell heavy)
+- After #26 + #27: ~600–700 MB
+- Plus smaller foot scrollback (`scrollback: 10000` → lines) and closing
+  idle portals: **~450–600 MB** ✅

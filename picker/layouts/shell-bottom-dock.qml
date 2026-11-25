@@ -166,7 +166,14 @@ PanelWindow {
                     console.log("BG LOAD FAILED (bgImageA):", source)
                 }
             }
+        
+            // Blur-fuel source: decode at 1/3 screen resolution.
+            // Scaled up + blurred afterwards, so the visual result
+            // is identical while decode + GPU blur cost drop ~9x.
+            sourceSize.width: Math.max(160, Screen.width / 3)
+            sourceSize.height: Math.max(90, Screen.height / 3)
         }
+
 
         Image {
             id: bgImageB
@@ -336,7 +343,14 @@ PanelWindow {
                             id: retryTimer
                             interval: 1000
                             repeat: false
+                            property int attempts: 0
                             onTriggered: {
+                                // Give the native thumbnailer a few seconds
+                                // to catch up, then stop hammering a thumb
+                                // that is genuinely broken (or a video with
+                                // no ffmpeg).
+                                if (attempts >= 3) return
+                                attempts++
                                 let s = img.source;
                                 img.source = "";
                                 img.source = s;

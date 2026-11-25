@@ -22,7 +22,10 @@ fn thumbnail(source: &Path, target: &Path) -> Result {
     };
     let rgb = scaled.to_rgb8();
     let file = BufWriter::new(File::create(target)?);
-    image::codecs::png::PngEncoder::new(file).write_image(
+    // JPEG, not PNG: photo thumbnails decode several times faster, which is
+    // exactly what the picker's per-card Image items pay at open time.
+    // QML Image detects the real format from content, not the file name.
+    image::codecs::jpeg::JpegEncoder::new_with_quality(file, 86).write_image(
         rgb.as_raw(),
         rgb.width(),
         rgb.height(),

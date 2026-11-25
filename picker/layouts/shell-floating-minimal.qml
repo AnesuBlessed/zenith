@@ -215,8 +215,8 @@ PanelWindow {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                sourceSize.width: Screen.width
-                sourceSize.height: Screen.height
+                sourceSize.width: Math.max(160, Screen.width / 3)
+                sourceSize.height: Math.max(90, Screen.height / 3)
                 opacity: bgToggle ? 0.0 : 1.0
                 Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
                 onStatusChanged: if (status === Image.Ready) main.maybeReveal()
@@ -228,8 +228,8 @@ PanelWindow {
                 fillMode: Image.PreserveAspectCrop
                 asynchronous: true
                 cache: true
-                sourceSize.width: Screen.width
-                sourceSize.height: Screen.height
+                sourceSize.width: Math.max(160, Screen.width / 3)
+                sourceSize.height: Math.max(90, Screen.height / 3)
                 opacity: bgToggle ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 450; easing.type: Easing.InOutQuad } }
                 onStatusChanged: if (status === Image.Ready) main.maybeReveal()

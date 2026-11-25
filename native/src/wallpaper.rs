@@ -173,7 +173,12 @@ fn transition_flags(kind: &str, duration: &str, reduced: bool) -> Vec<String> {
     flags.push("--transition-duration".into());
     flags.push(duration.into());
     flags.push("--transition-fps".into());
-    flags.push("60".into());
+    // Frame rate is the main transition cost on weak GPUs. Long fades are
+    // imperceptibly smoother at 60fps, so drop to 30 for them (and when the
+    // user asked for reduced motion) to halve the redraw load.
+    let duration_value: f64 = duration.parse().unwrap_or(0.9);
+    let fps = if reduced || duration_value >= 1.5 { "30" } else { "60" };
+    flags.push(fps.into());
     flags
 }
 

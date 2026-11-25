@@ -255,6 +255,11 @@ PanelWindow {
                 opacity: bgToggle ? 0.0 : 1.0
                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
                 onStatusChanged: if (status === Image.Ready) main.maybeReveal()
+                // Blur-fuel source: decode at 1/3 screen resolution.
+                // Scaled up + blurred afterwards, so the visual result
+                // is identical while decode + GPU blur cost drop ~9x.
+                sourceSize.width: Math.max(160, Screen.width / 3)
+                sourceSize.height: Math.max(90, Screen.height / 3)
             }
 
             Image {
@@ -266,6 +271,8 @@ PanelWindow {
                 opacity: bgToggle ? 1.0 : 0.0
                 Behavior on opacity { NumberAnimation { duration: 400; easing.type: Easing.InOutQuad } }
                 onStatusChanged: if (status === Image.Ready) main.maybeReveal()
+                sourceSize.width: Math.max(160, Screen.width / 3)
+                sourceSize.height: Math.max(90, Screen.height / 3)
             }
 
             MultiEffect {
