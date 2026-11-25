@@ -32,7 +32,9 @@ case "$1" in
     STATE="$(_get_state)"
     case "$2" in
       power)
-        if [ "$STATE" = "open" ]; then printf '✕'; else printf '⏻'; fi
+        # U+23FB (⏻) is missing from Nerd Fonts — use md-power (󰐥) instead,
+        # otherwise hyprlock renders a broken fallback glyph.
+        if [ "$STATE" = "open" ]; then printf '✕'; else printf '󰐥'; fi
         ;;
       suspend)
         [ "$STATE" = "open" ] && printf '󰒲  Suspend' || printf ''

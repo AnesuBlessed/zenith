@@ -110,7 +110,22 @@ QtObject {
             adapter.enabled = value
     }
 
+    // A rfkill soft/hard block leaves the adapter unusable even when the
+    // stack is up; enabling the adapter then silently does nothing. When the
+    // user toggles Bluetooth while blocked, try to lift the soft block first
+    // (direct unblock, escalating to pkexec so the polkit agent can
+    // authenticate it), then the adapter can be enabled normally.
+    function unblockRadio(): void {
+        unblockProcess.command = ["sh", "-c",
+            "rfkill unblock bluetooth 2>/dev/null || pkexec rfkill unblock bluetooth"]
+        unblockProcess.running = true
+    }
+
     function toggleEnabled(): void {
+        if (blocked) {
+            unblockRadio()
+            return
+        }
         setEnabled(!enabled)
     }
 
@@ -497,6 +512,10 @@ QtObject {
                 root.beginPair(device)
             }
         }
+    }
+
+    property Process unblockProcess: Process {
+        running: false
     }
 
     property Process pairProcess: Process {

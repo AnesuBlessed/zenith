@@ -289,6 +289,14 @@ if ((${#missing[@]} > 0)); then
 fi
 log_ok "Core commands verified."
 
+# Bluetooth radios shipped soft-blocked leave the shell reporting "Radio
+# blocked"; lift it once at install time (the polkit path in the shell
+# handles later blocks at runtime).
+if command -v rfkill >/dev/null 2>&1; then
+    rfkill unblock bluetooth 2>/dev/null || sudo rfkill unblock bluetooth 2>/dev/null \
+        || true
+fi
+
 # -----------------------------------------------------------------------------
 # 8. Shell prompt
 # -----------------------------------------------------------------------------

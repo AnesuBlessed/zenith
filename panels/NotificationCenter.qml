@@ -66,7 +66,7 @@ Item {
                     spacing: Theme.space1
 
                     Text {
-                        text: NotificationService.doNotDisturb ? "󰂛" : "󰂚"
+                        text: NotificationService.doNotDisturb ? "󰃜" : "󰂚"
                         color: Theme.surfaceText
                         font.family: Config.appearance.monoFontFamily
                         font.pixelSize: Config.island.expandedPixelSize(Theme.iconSmall, true)

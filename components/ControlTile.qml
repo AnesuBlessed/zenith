@@ -50,8 +50,8 @@ Rectangle {
                 // The crescent moon glyph faces left by default; mirror it to
                 // face right and tilt a little toward the north east.
                 transform: [
-                    Scale { xScale: root.icon === "󰃢" ? -1 : 1 },
-                    Rotation { angle: root.icon === "󰃢" ? -18 : 0 }
+                    Scale { xScale: root.icon === "󰃜" ? -1 : 1 },
+                    Rotation { angle: root.icon === "󰃜" ? -18 : 0 }
                 ]
             }
         }

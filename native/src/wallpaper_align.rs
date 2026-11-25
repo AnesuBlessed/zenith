@@ -148,7 +148,105 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     save_atomic(&DynamicImage::ImageRgba8(clip_blur.to_rgba8()),
         &cache_dir.join("wall.clipboard.blur.png"))?;
 
+    // 5. Lock screen background: the full monitor, blurred and dimmed.
+    //    Hyprlock needs a real image file — pointing it at a state text file
+    //    renders as a black screen.
+    let lock_bg = screen
+        .crop_imm(0, 0, mon.width.min(screen.width()), mon.height.min(screen.height()))
+        .blur(14.0);
+    let mut lock_tinted = lock_bg.to_rgba8();
+    for p in lock_tinted.pixels_mut() {
+        p[0] = (p[0] as f32 * 0.62) as u8;
+        p[1] = (p[1] as f32 * 0.62) as u8;
+        p[2] = (p[2] as f32 * 0.66) as u8;
+    }
+    save_atomic(&DynamicImage::ImageRgba8(lock_tinted),
+        &cache_dir.join("wall.lock.png"))?;
+
+    generate_avatar(&cache_dir.join("avatar.png"), &[])?;
+
     Ok(())
+}
+
+/// Draws the Zenith avatar: a two-tone gradient ring with a soft outer glow,
+/// a dark glass disc and a geometric "Z" monogram. Pure raster (no fonts),
+/// so it renders identically everywhere.
+pub fn generate_avatar(path: &Path, _palette: &[&str]) -> Result {
+    const S: u32 = 256;
+    let cx = (S / 2) as f32;
+    let cy = (S / 2) as f32;
+    let r_ring = 112.0f32;
+    let r_ring_in = 100.0f32;
+
+    let mut img = image::RgbaImage::new(S, S);
+    for y in 0..S {
+        for x in 0..S {
+            let dx = x as f32 - cx;
+            let dy = y as f32 - cy;
+            let dist = (dx * dx + dy * dy).sqrt();
+            // angle 0..2pi for the ring gradient (accent -> cyan -> accent)
+            let mut a = dx.atan2(dy) / std::f32::consts::TAU;
+            if a < 0.0 { a += 1.0; }
+            let t = if a < 0.5 { a * 2.0 } else { (1.0 - a) * 2.0 };
+            // Accent #59B9E8 -> Cyan #7FD6E8
+            let r = 89.0 + (127.0 - 89.0) * t;
+            let g = 185.0 + (214.0 - 185.0) * t;
+            let b = 232.0 + (232.0 - 232.0) * t;
+
+            let px = img.get_pixel_mut(x, y);
+            if dist <= r_ring_in {
+                // Dark glass disc, slightly transparent towards the rim
+                let shade = 14.0 + 10.0 * (dist / r_ring_in);
+                *px = image::Rgba([shade as u8, (shade + 4.0) as u8,
+                    (shade + 12.0) as u8, 235]);
+            } else if dist <= r_ring + 10.0 {
+                // Soft outer glow fading out
+                let glow = (1.0 - (dist - r_ring) / 10.0).clamp(0.0, 1.0) * 70.0;
+                *px = image::Rgba([r as u8, g as u8, b as u8, glow as u8]);
+            }
+            if dist > r_ring_in && dist <= r_ring {
+                *px = image::Rgba([r as u8, g as u8, b as u8, 255]);
+            }
+        }
+    }
+
+    // Geometric "Z": two bars joined by a diagonal band, shaded
+    // near-white -> accent left to right.
+    let z_left = 84.0f32;
+    let z_right = 172.0f32;
+    let bar_top = 84.0f32;
+    let bar_bot = 160.0f32;
+    let bar_h = 15.0f32;
+    for y in 0..S {
+        for x in 0..S {
+            let fx = x as f32;
+            let fy = y as f32;
+            let t = ((fx - z_left) / (z_right - z_left)).clamp(0.0, 1.0);
+            // White -> accent diagonal shading
+            let r = 235.0 + (89.0 - 235.0) * t * 0.75;
+            let g = 242.0 + (185.0 - 242.0) * t * 0.75;
+            let b = 250.0 + (232.0 - 250.0) * t * 0.75;
+
+            let in_top_bar = fy >= bar_top && fy < bar_top + bar_h
+                && fx >= z_left && fx < z_right;
+            let in_bot_bar = fy >= bar_bot - bar_h && fy < bar_bot
+                && fx >= z_left && fx < z_right;
+            // Diagonal: connects the top bar's right end to the bottom bar's
+            // left end, sweeping right -> left as y increases.
+            let progress = ((fy - bar_top - bar_h) / (bar_bot - bar_top - 2.0 * bar_h))
+                .clamp(0.0, 1.0);
+            let span_mid = z_right - (z_right - z_left) * progress;
+            let in_diag = fy >= bar_top + bar_h && fy < bar_bot - bar_h
+                && (fx - span_mid).abs() <= 17.0;
+
+            if in_top_bar || in_bot_bar || in_diag {
+                let px = img.get_pixel_mut(x, y);
+                *px = image::Rgba([r as u8, g as u8, b as u8, 255]);
+            }
+        }
+    }
+
+    save_atomic(&DynamicImage::ImageRgba8(img), path)
 }
 
 /// Writes an image through a temp file + rename so a rofi window opened

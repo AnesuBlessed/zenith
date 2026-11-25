@@ -71,8 +71,8 @@ RowLayout {
                     font.pixelSize: Config.island.expandedPixelSize(15, true)
                     // Mirror the crescent moon so it faces right, tilted NE.
                     transform: [
-                        Scale { xScale: modelData.icon === "󰃢" ? -1 : 1 },
-                        Rotation { angle: modelData.icon === "󰃢" ? -18 : 0 }
+                        Scale { xScale: modelData.icon === "󰃜" ? -1 : 1 },
+                        Rotation { angle: modelData.icon === "󰃜" ? -18 : 0 }
                     ]
                 }
                 Text {

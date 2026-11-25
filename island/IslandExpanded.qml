@@ -75,27 +75,54 @@ Item {
                 anchors.left: parent.left
                 anchors.verticalCenter: parent.verticalCenter
                 spacing: Theme.space2
-
                 Rectangle {
                     Layout.preferredWidth: 34
                     Layout.preferredHeight: 30
                     radius: Theme.radiusSmall
-                    color: root.overviewOpen ? Theme.primaryContainer
-                        : overviewNavHover.hovered
+                    color: root.sessionOpen ? Theme.primaryContainer
+                        : sessionNavHover.hovered
                             ? Theme.surfaceContainerHigh : "transparent"
 
                     Text {
                         anchors.centerIn: parent
-                        text: "󰕮"
-                        color: root.overviewOpen
+                        text: "󰐥"
+                        color: root.sessionOpen
                             ? Theme.primaryContainerText : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
                         font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                     }
 
-                    HoverHandler { id: overviewNavHover }
+                    HoverHandler { id: sessionNavHover }
                     TapHandler {
-                        onTapped: root.pageSelected("overview")
+                        onTapped: root.pageSelected(root.sessionOpen
+                            ? "overview" : "session")
+                    }
+
+                    Behavior on color { ColorAnimation { duration: Animations.fast } }
+                }
+
+                Rectangle {
+                    Layout.preferredWidth: 34
+                    Layout.preferredHeight: 30
+                    radius: Theme.radiusSmall
+                    color: root.captureOpen ? Theme.primaryContainer
+                        : captureNavHover.hovered
+                            ? Theme.surfaceContainerHigh : "transparent"
+
+                    Text {
+                        anchors.centerIn: parent
+                        text: CaptureService.recording ? "󰑊" : "󰄀"
+                        color: CaptureService.recording ? Theme.error
+                            : root.captureOpen ? Theme.primaryContainerText
+                            : Theme.surfaceVariantText
+                        font.family: Config.appearance.monoFontFamily
+                        font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
+                    }
+
+                    HoverHandler { id: captureNavHover }
+                    TapHandler {
+                        onTapped: root.pageSelected(root.captureOpen
+                            ? "overview" : "capture")
                     }
 
                     Behavior on color { ColorAnimation { duration: Animations.fast } }
@@ -138,7 +165,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "󰅃"
+                        text: "󰘮"
                         color: root.controlCenterOpen
                             ? Theme.primaryContainerText : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
@@ -154,30 +181,26 @@ Item {
                     Behavior on color { ColorAnimation { duration: Animations.fast } }
                 }
 
-
-
                 Rectangle {
                     Layout.preferredWidth: 34
                     Layout.preferredHeight: 30
                     radius: Theme.radiusSmall
-                    color: root.captureOpen ? Theme.primaryContainer
-                        : captureNavHover.hovered
+                    color: root.overviewOpen ? Theme.primaryContainer
+                        : overviewNavHover.hovered
                             ? Theme.surfaceContainerHigh : "transparent"
 
                     Text {
                         anchors.centerIn: parent
-                        text: CaptureService.recording ? "󰑊" : "󰄀"
-                        color: CaptureService.recording ? Theme.error
-                            : root.captureOpen ? Theme.primaryContainerText
-                            : Theme.surfaceVariantText
+                        text: "󰕮"
+                        color: root.overviewOpen
+                            ? Theme.primaryContainerText : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
                         font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
                     }
 
-                    HoverHandler { id: captureNavHover }
+                    HoverHandler { id: overviewNavHover }
                     TapHandler {
-                        onTapped: root.pageSelected(root.captureOpen
-                            ? "overview" : "capture")
+                        onTapped: root.pageSelected("overview")
                     }
 
                     Behavior on color { ColorAnimation { duration: Animations.fast } }
@@ -234,31 +257,7 @@ Item {
                     Behavior on color { ColorAnimation { duration: Animations.fast } }
                 }
 
-                Rectangle {
-                    Layout.preferredWidth: 34
-                    Layout.preferredHeight: 30
-                    radius: Theme.radiusSmall
-                    color: root.sessionOpen ? Theme.primaryContainer
-                        : sessionNavHover.hovered
-                            ? Theme.surfaceContainerHigh : "transparent"
 
-                    Text {
-                        anchors.centerIn: parent
-                        text: "󰐥"
-                        color: root.sessionOpen
-                            ? Theme.primaryContainerText : Theme.surfaceVariantText
-                        font.family: Config.appearance.monoFontFamily
-                        font.pixelSize: Config.island.expandedTopIconPixelSize(Theme.iconSmall)
-                    }
-
-                    HoverHandler { id: sessionNavHover }
-                    TapHandler {
-                        onTapped: root.pageSelected(root.sessionOpen
-                            ? "overview" : "session")
-                    }
-
-                    Behavior on color { ColorAnimation { duration: Animations.fast } }
-                }
             }
 
             Text {

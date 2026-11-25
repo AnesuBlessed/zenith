@@ -21,9 +21,12 @@ case "$1" in
     printf '%s %s%%' "$ICON" "$LEVEL"
     ;;
   wifi)
-    SSID=$(iwgetid -r 2>/dev/null)
+    # NetworkManager first (iwgetid needs wireless-tools which many systems lack)
+    SSID=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')
+    [ -z "$SSID" ] && SSID=$(iwgetid -r 2>/dev/null)
     if [ -n "$SSID" ]; then
-      STRENGTH=$(awk 'NR==3{print int($3*100/70)}' /proc/net/wireless 2>/dev/null)
+      STRENGTH=$(nmcli -t -f IN-USE,SIGNAL dev wifi 2>/dev/null | awk -F: '$2!=""{if($2>max)max=$2}END{print max}')
+      [ -z "$STRENGTH" ] && STRENGTH=$(awk 'NR==3{print int($3*100/70)}' /proc/net/wireless 2>/dev/null)
       if [ "${STRENGTH:-0}" -ge 75 ]; then ICON='󰤨'
       elif [ "${STRENGTH:-0}" -ge 50 ]; then ICON='󰤥'
       elif [ "${STRENGTH:-0}" -ge 25 ]; then ICON='󰤢'
