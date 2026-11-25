@@ -1,5 +1,12 @@
-[Desktop Entry]
-Encoding=UTF-8
+[SddmGreeterTheme]
 Name=Zenith
-Comment=Zenith lock-screen styled SDDM greeter
-Type=Service
+Description=Zenith lock-screen styled greeter with Zenith Display
+Comment=Zenith lock-screen styled greeter
+Type=sddm-theme
+Author=Project Zenith
+MainScript=Main.qml
+ConfigFile=theme.conf
+TranslationsDirectory=.
+QtVersion=6
+Theme-Id=zenith
+Theme-API=2.0

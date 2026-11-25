@@ -235,6 +235,13 @@ pub fn write_palette(seed_hex: &str, scheme: &str, mode: &str) -> Result<Value> 
         "light": palette_for(seed, scheme, true),
     });
     atomic(&state().join("palette.json"), serde_json::to_vec_pretty(&document)?)?;
+
+    // Mirror for the greeter before consumer writes; a bad rofi/foot/hyprlock
+    // target must never leave SDDM with stale colors.
+    if let Err(err) = write_sddm_palette(&document) {
+        eprintln!("zenith-native: SDDM palette mirror skipped: {err}");
+    }
+
     write_consumers(&document)?;
     Ok(document)
 }
@@ -311,8 +318,42 @@ fn write_consumers(document: &Value) -> Result {
     atomic(&cache().join("theme-override.rasi"), rasi)?;
 
     splice_hyprlock(document)?;
-
     Ok(())
+}
+
+/// Writes the shared palette component consumed by the SDDM greeter. Keeping
+/// this in /var/lib/zenith means both hyprlock (via hyprlock.conf) and SDDM
+/// follow the same generated tokens after every wallpaper change.
+fn write_sddm_palette(document: &Value) -> Result {
+    let shared = Path::new("/var/lib/zenith");
+    if !shared.is_dir() {
+        return Ok(());
+    }
+
+    let mode = document["mode"].as_str().unwrap_or("dark");
+    let group = if mode == "light" { "light" } else { "dark" };
+    let qml = format!(
+        "import QtQml\n\n\
+         QtObject {{\n\
+             readonly property color accent: \"{}\"\n\
+             readonly property color surface: \"{}\"\n\
+             readonly property color onSurface: \"{}\"\n\
+             readonly property color onSurfaceVariant: \"{}\"\n\
+             readonly property color error: \"{}\"\n\
+             readonly property color outlineVariant: \"{}\"\n\
+         }}\n",
+        token(document, group, "primary"),
+        token(document, group, "surfaceContainerHigh"),
+        token(document, group, "onSurface"),
+        token(document, group, "onSurfaceVariant"),
+        token(document, group, "error"),
+        token(document, group, "outlineVariant"),
+    );
+    let path = shared.join("palette.qml");
+    if fs::read_to_string(&path).as_deref() == Ok(qml.as_str()) {
+        return Ok(());
+    }
+    atomic(&path, qml)
 }
 
 /// Splices the generated palette into the managed block of hyprlock.conf so
@@ -337,7 +378,7 @@ fn splice_hyprlock(document: &Value) -> Result {
         "{BEGIN}\n\
          $accent   = rgb({})\n\
          $base     = rgb({})\n\
-         $surface  = rgb({})\n\
+         $surface  = rgba({}, 0.75)\n\
          $border   = rgba({}, 0.35)\n\
          $text     = rgb({})\n\
          $muted    = rgb({})\n\

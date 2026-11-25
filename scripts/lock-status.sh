@@ -1,5 +1,15 @@
 #!/bin/sh
 # lock-status.sh — Dynamic widget data for Zenith lock screen
+#
+# The individual commands feed hyprlock's cmd[update:] labels. `snapshot`
+# writes the same strings into a small QML object that the SDDM greeter loads,
+# so the login screen and the lock screen show the same status widgets.
+
+SNAPSHOT_FILE="/var/lib/zenith/lock-status.qml"
+
+qml_escape() {
+    printf '%s' "$1" | sed -e 's/\\/\\\\/g' -e 's/"/\\"/g'
+}
 
 case "$1" in
   battery)
@@ -62,8 +72,30 @@ case "$1" in
     if [ "$STATUS" = "Playing" ]; then ICON='󰎆'; else ICON='󰏤'; fi
     printf '%s  %s — %s' "$ICON" "$ARTIST" "$TITLE"
     ;;
+  snapshot)
+    # Best-effort mirror for the SDDM greeter. The directory is created and
+    # owned by install.sh; failure here must never prevent locking.
+    [ -d "$(dirname "$SNAPSHOT_FILE")" ] || exit 0
+    WEATHER=$("$0" weather 2>/dev/null)
+    WIFI=$("$0" wifi 2>/dev/null)
+    BATTERY=$("$0" battery 2>/dev/null)
+    MEDIA=$("$0" media 2>/dev/null)
+    TMP="${SNAPSHOT_FILE}.tmp.$$"
+    {
+      printf 'import QtQml\n\n'
+      printf 'QtObject {\n'
+      printf '  readonly property string weather: "%s"\n' "$(qml_escape "$WEATHER")"
+      printf '  readonly property string wifi: "%s"\n' "$(qml_escape "$WIFI")"
+      printf '  readonly property string battery: "%s"\n' "$(qml_escape "$BATTERY")"
+      printf '  readonly property string media: "%s"\n' "$(qml_escape "$MEDIA")"
+      printf '}\n'
+    } > "$TMP" 2>/dev/null && mv -f "$TMP" "$SNAPSHOT_FILE" 2>/dev/null || {
+      rm -f "$TMP" 2>/dev/null || true
+      exit 0
+    }
+    ;;
   *)
-    echo "Usage: lock-status.sh battery|wifi|weather|media" >&2
+    echo "Usage: lock-status.sh battery|wifi|weather|media|snapshot" >&2
     exit 1
     ;;
 esac

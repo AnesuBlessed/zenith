@@ -32,6 +32,12 @@ palette_block() {
         if [[ ${#hex} -ne 6 ]]; then printf 'rgb(168, 153, 230)'; return; fi
         printf 'rgb(%d, %d, %d)' "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}"
     }
+    rgba() {
+        local hex="${1#\#}" alpha="$2"
+        if [[ ${#hex} -ne 6 ]]; then printf 'rgba(168, 153, 230, %s)' "$alpha"; return; fi
+        printf 'rgba(%d, %d, %d, %s)' \
+            "0x${hex:0:2}" "0x${hex:2:2}" "0x${hex:4:2}" "$alpha"
+    }
     local accent surface text muted warning
     accent="$(token primary)"
     surface="$(token surface)"
@@ -41,12 +47,12 @@ palette_block() {
     printf '%s\n' "$BEGIN"
     printf '\$accent   = %s\n' "$(rgb "$accent")"
     printf '\$base     = %s\n' "$(rgb "$surface")"
-    printf '\$surface  = %s\n' "$(rgb "$(token surfaceContainer)")"
-    printf '\$border   = %s\n' "$(rgb "$(token outlineVariant)")"
+    printf '\$surface  = %s\n' "$(rgba "$(token surfaceContainer)" 0.75)"
+    printf '\$border   = %s\n' "$(rgba "$(token outlineVariant)" 0.35)"
     printf '\$text     = %s\n' "$(rgb "$text")"
     printf '\$muted    = %s\n' "$(rgb "$muted")"
     printf '\$critical = %s\n' "$(rgb "$warning")"
-    printf '\$popup    = %s\n' "$(rgb "$(token surfaceContainerHigh)")"
+    printf '\$popup    = %s\n' "$(rgba "$(token surfaceContainerHigh)" 0.92)"
     printf '%s\n' "$END"
 }
 

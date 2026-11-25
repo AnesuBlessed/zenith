@@ -1,7 +1,7 @@
 # 🌌 Project Zenith
 
 > **The Zero-Bloat, Event-Driven, Hardware-Aware Hyprland Desktop Environment**
-> Quickshell Dynamic Island · native Rust wallpaper/theme engine · standalone QML wallpaper picker · Zero Python.
+> Quickshell Dynamic Island · native Rust wallpaper/theme/notification engine · C fast-path dispatchers · standalone QML wallpaper picker · Zero Python.
 
 ---
 
@@ -12,6 +12,7 @@
 3. **True zero idle overhead.** Quickshell only redraws on events; `foot --server` keeps terminals cheap.
 4. **Universal portability.** Arch Linux, EndeavourOS, CachyOS, Manjaro, Garuda, ArcoLinux.
 5. **Strict Zero-Python standard.** Compiled C + Rust + POSIX shell + QML only.
+6. **One lock-screen contract.** hyprlock and the SDDM greeter consume the same generated background, palette, avatar and status snapshot; SDDM runs as a Qt6 theme with the real greeter proxy API and a Silent-inspired card rendered in Zenith Display.
 
 ---
 
@@ -54,14 +55,16 @@ Shortcuts marked "managed" in **Settings → Shortcuts** are written to
 ```
 zenith/
 ├── hypr/                 # Modular Hyprland Lua config (+ generated colors.lua)
-├── native/               # Rust engine and C dispatcher
+├── native/               # Rust engine and C dispatchers
 │   ├── zenith-ctl.c      # PID toggle dispatcher (launcher, clipboard, picker, window)
-│   └── src/              # main.rs, wallpaper.rs, palette.rs, theme.rs, thumbs.rs, …
+│   ├── zenith-notifyctl.c # C client for the notification presentation engine
+│   └── src/              # main.rs, notify.rs, wallpaper.rs, palette.rs, theme.rs, …
 ├── picker/               # Standalone Quickshell wallpaper picker (hyprquickpaper layout port)
 │   ├── shell.qml         # Loads layouts/<active_layout> from config.json
 │   ├── layouts/          # 14 picker layouts, themed through theme/Zn.qml
 │   └── theme/Zn.qml      # Palette bridge + native backend calls
 ├── island/               # Quickshell Dynamic Island
+├── sddm/zenith/          # Qt6 SDDM greeter themed from the same lock assets
 ├── services/             # Quickshell service singletons (audio, network, wallpaper, …)
 ├── rofi/                 # Wallpaper-aligned launcher, clipboard and selector themes
 ├── foot/                 # Terminal configuration

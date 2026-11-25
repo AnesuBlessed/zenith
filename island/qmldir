@@ -9,5 +9,6 @@ IslandExpanded 1.0 IslandExpanded.qml
 IslandHover 1.0 IslandHover.qml
 IslandHoverItem 1.0 IslandHoverItem.qml
 IslandMedia 1.0 IslandMedia.qml
-IslandNotification 1.0 IslandNotification.qml
+NotifyCard 1.0 NotifyCard.qml
+NotifyStack 1.0 NotifyStack.qml
 IslandOSD 1.0 IslandOSD.qml

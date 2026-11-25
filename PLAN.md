@@ -5,7 +5,8 @@ Zenith is a Hyprland desktop built from five layers:
 1. **Hyprland Lua modules** (`hypr/`) — compositor rules, keybinds, autostart.
 2. **Quickshell island** (`shell.qml`, `island/`, `panels/`, `components/`) — QML UI.
 3. **Native engine** (`native/`) — Rust owns wallpapers, palettes, thumbnails,
-   clipboard scripting; C dispatches rofi/picker by PID.
+   clipboard scripting and the notification presentation stack; C dispatches
+   rofi/picker by PID and forwards notification commands over a Unix socket.
 4. **Standalone picker** (`picker/`) — hyprquickpaper layouts ported to QML and
    the Zenith palette; no Python, no web runtime.
 5. **Shell helpers** (`scripts/`) — narrow, testable glue for capture, idle,
@@ -26,6 +27,32 @@ transaction:
 
 The command prints `STATE=`, `COMMITTED=` and `PALETTE=` lines. QML only
 treats the selection as committed when those lines report success.
+
+## Notification presentation
+
+Quickshell still owns the freedesktop D-Bus `NotificationServer`, history,
+actions and DND. Presentation is native: `NotificationBridge.qml` forwards the
+active popup entries through `zenith-notifyctl` (C) to `zenith-native notify
+daemon` (Rust). The Rust engine keeps a bounded, spring-animated stack with
+hover freezing and timeout expiry, and publishes an atomic JSON snapshot.
+`island/NotifyStack.qml` renders that snapshot on the existing island surface;
+the old single-card `IslandNotification.qml` is gone.
+
+## Lock and greeter presentation
+
+`hyprlock.conf` and `sddm/zenith/Main.qml` are two renderers of one contract.
+The native wallpaper transaction writes the processed background and avatar to
+`$HOME/.cache/zenith` and mirrors them into `/var/lib/zenith`, where the SDDM
+user can read them. Palette tokens are written to the same shared directory as
+a small QML object, and `scripts/lock-status.sh snapshot` publishes the status
+strings both screens display. The SDDM theme declares `QtVersion=6` and uses
+`sessionModel.lastIndex`, `userModel.lastUser` and integer-index
+`sddm.login()`, so it no longer falls back to the embedded greeter.
+
+The greeter layout is SilentSDDM-inspired — centered glass login card, avatar,
+user/password/login pill, bottom session and power popups — but all text uses
+`Zenith Display` (Nerd font only for status glyphs), and no SilentSDDM code or
+assets are vendored. The card reads only Zenith's generated artifacts.
 
 ## Picker
 

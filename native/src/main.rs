@@ -1,5 +1,6 @@
 mod clipboard;
 mod config;
+mod notify;
 mod palette;
 mod theme;
 mod thumbs;
@@ -67,6 +68,14 @@ fn dispatch(args: &[String]) -> Result {
                 _ => Err(error(format!("Unknown wallpaper subcommand: {sub}"))),
             }
         }
+        "notify" => {
+            let sub = rest.first().map(String::as_str).unwrap_or("snapshot");
+            match sub {
+                "daemon" => notify::daemon(),
+                "snapshot" => notify::snapshot(),
+                _ => Err(error(format!("Unknown notify subcommand: {sub}"))),
+            }
+        }
         "align" => {
             let current = wallpaper::current();
             if current.is_empty() {
@@ -106,6 +115,8 @@ fn dispatch(args: &[String]) -> Result {
             println!("  wallpaper thumbs [--force]      Generate picker thumbnails");
             println!("  theme [refresh|color <#hex>]    Regenerate or override the palette");
             println!("  align                           Regenerate launcher/clipboard crops");
+            println!("  notify daemon                   Run the notification presentation engine");
+            println!("  notify snapshot                 Print the current notification snapshot");
             Ok(())
         }
         _ => Err(error(format!("Unknown command: {cmd}"))),

@@ -154,31 +154,29 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let lock_bg = screen
         .crop_imm(0, 0, mon.width.min(screen.width()), mon.height.min(screen.height()))
         .blur(14.0);
-    let lock_tinted = lock_bg.to_rgba8();
-    let mut lock_tinted2 = lock_tinted.clone();
-    for p in lock_tinted2.pixels_mut() {
+    let mut lock_tinted = lock_bg.to_rgba8();
+    for p in lock_tinted.pixels_mut() {
         p[0] = (p[0] as f32 * 0.62) as u8;
         p[1] = (p[1] as f32 * 0.62) as u8;
         p[2] = (p[2] as f32 * 0.66) as u8;
     }
-    save_atomic(&DynamicImage::ImageRgba8(lock_tinted2),
-        &cache_dir.join("wall.lock.png"))?;
+    let lock_image = DynamicImage::ImageRgba8(lock_tinted);
+    save_atomic(&lock_image, &cache_dir.join("wall.lock.png"))?;
 
-    // SDDM greeter runs as its own user and cannot read $HOME, so mirror
-    // the lock background into a world-readable staging path it can load.
-    let sddm_dir = std::path::Path::new("/var/lib/zenith");
-    if sddm_dir.is_dir() {
-        let mut lock_tinted = lock_tinted;
-        for p in lock_tinted.pixels_mut() {
-            p[0] = (p[0] as f32 * 0.62) as u8;
-            p[1] = (p[1] as f32 * 0.62) as u8;
-            p[2] = (p[2] as f32 * 0.66) as u8;
-        }
-        let _ = save_atomic(&DynamicImage::ImageRgba8(lock_tinted),
-            &sddm_dir.join("lock-bg.png"));
+    // SDDM greeter runs as its own user and cannot read $HOME, so mirror the
+    // exact same processed background and avatar into a world-readable path.
+    let shared_dir = Path::new("/var/lib/zenith");
+    if shared_dir.is_dir() {
+        let _ = save_atomic(&lock_image, &shared_dir.join("lock-bg.png"));
     }
 
-    generate_avatar(&cache_dir.join("avatar.png"), &[])?;
+    let avatar_path = cache_dir.join("avatar.png");
+    generate_avatar(&avatar_path, &[])?;
+    if shared_dir.is_dir() {
+        if let Ok(bytes) = fs::read(&avatar_path) {
+            let _ = atomic(&shared_dir.join("avatar.png"), bytes);
+        }
+    }
     generate_power_icon(&cache_dir.join("power.png"))?;
 
     Ok(())

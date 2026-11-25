@@ -19,6 +19,14 @@ PanelWindow {
         HyprlandService.islandEnabledFor(monitor)
     readonly property bool presentationTarget:
         HyprlandService.shouldPresentOn(monitor)
+    // Only entries eligible for a popup are sent to the native stack. History
+    // cards suppressed by DND stay in the Notification Center but never arrive.
+    readonly property var presentableNotifications:
+        (NotificationService.history || []).filter(entry =>
+            !!entry?.active && (entry.critical
+                ? Config.notifications.allowCriticalAlerts
+                : Config.notifications.showPopups
+                    && !Config.notifications.doNotDisturb))
 
     IslandController {
         id: islandController
@@ -71,7 +79,10 @@ PanelWindow {
             Config.settings.height)) * Config.island.expandedScale),
         Config.island.hoverHeight + Config.island.hoverHeightIncrease,
         Config.island.dormantHeight + Config.island.restHeightIncrease,
-        Config.island.mediaHeight)
+        Config.island.mediaHeight,
+        Config.island.mediaHeight
+            + (Config.notifications.stackMax - 1)
+                * (Config.notifications.cardHeight + Config.notifications.cardGap))
         + liveEditOffset
     color: "transparent"
     visible: monitorEnabled && islandController.shouldShow
@@ -269,12 +280,12 @@ PanelWindow {
                 anchors.top: parent.top
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Config.island.mediaWidth
-                height: Config.island.mediaHeight
+                height: islandController.notificationContentHeight
                 enabled: islandController.visualState === islandController.notification
                     && !islandController.notificationDismissing
                 opacity: islandController.visualState === islandController.notification
                     && !islandController.notificationDismissing ? 1 : 0
-                IslandNotification { anchors.fill: parent }
+                NotifyStack { anchors.fill: parent }
                 Behavior on opacity {
                     NumberAnimation {
                         duration: Animations.fast
@@ -614,6 +625,37 @@ PanelWindow {
                 islandController.dismissTransientNotification()
             else if (islandController.expandedPage === "notifications")
                 islandController.dismiss(true)
+        }
+    }
+
+    Connections {
+        target: NotificationService
+        function onHistoryChanged(): void {
+            if (window.presentationTarget)
+                NotificationBridge.sync(window.presentableNotifications)
+        }
+        function onPreferencesChanged(): void {
+            if (!window.presentationTarget)
+                return
+            // SettingsStore writes the JSON file first; let Config's watcher
+            // observe it before recomputing which entries may pop.
+            Qt.callLater(() => NotificationBridge.sync(
+                window.presentableNotifications))
+        }
+    }
+
+    Connections {
+        target: NotificationBridge
+        function onCardExpired(id, timestamp): void {
+            const entry = (NotificationService.history || []).find(candidate =>
+                candidate.id === id && candidate.timestamp === timestamp)
+            if (entry)
+                NotificationService.dismiss(entry)
+        }
+        function onActiveChanged(): void {
+            if (!NotificationBridge.active
+                    && islandController.visualState === islandController.notification)
+                islandController.expireTransientNotification()
         }
     }
 }

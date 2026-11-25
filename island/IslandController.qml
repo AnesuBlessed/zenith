@@ -1,5 +1,6 @@
 import QtQuick
 import "../core"
+import "../services"
 
 QtObject {
     id: root
@@ -29,6 +30,10 @@ QtObject {
     signal transientDismissAnimationFinished()
     property bool mediaVisible: false
     property int hoverContentWidth: Config.island.hoverWidth
+    readonly property int notificationContentHeight: Config.island.mediaHeight
+        + Math.max(0, Math.min(Config.notifications.stackMax,
+            NotificationBridge.visibleCount) - 1)
+            * (Config.notifications.cardHeight + Config.notifications.cardGap)
     property bool recordingActive: false
     property bool fullscreen: false
     property string expandedPage: "overview"
@@ -93,7 +98,7 @@ QtObject {
                         - Config.island.expandedHeight) * expandedDetailProgress)
                 : Config.island.expandedHeight)
         : visualState === media ? Config.island.mediaHeight
-        : visualState === notification ? Config.island.mediaHeight
+        : visualState === notification ? notificationContentHeight
         : transientActive ? Config.island.osdHeight
         : visualState === hover ? Config.island.hoverHeight
         : Config.island.dormantHeight

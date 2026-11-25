@@ -303,6 +303,12 @@ QtObject {
             "notifications", "doNotDisturb", false)
         readonly property int width: root.island.expandedWidth
         readonly property int height: 440
+        // Native island cards: three spring-stacked rows plus a compact
+        // overflow chip. Geometry is shared with the Rust engine via the
+        // notification bridge so QML and native agree on slot spacing.
+        readonly property int cardHeight: 74
+        readonly property int cardGap: 8
+        readonly property int stackMax: 3
     }
 
     readonly property QtObject hyprland: QtObject {

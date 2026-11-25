@@ -36,6 +36,7 @@ Singleton {
     // before the generic current-cleared signal exposes any hover state.
     signal transientDismissRequested()
     signal activationCompleted()
+    signal preferencesChanged()
 
     function plainText(value: string): string {
         return (value || "")
@@ -241,6 +242,7 @@ Singleton {
 
     function setDoNotDisturb(enabled: bool): void {
         SettingsStore.setNotificationToggle("doNotDisturb", enabled)
+        preferencesChanged()
         if (enabled && current) {
             current = null
             presentationDismissRequested()
@@ -249,6 +251,7 @@ Singleton {
 
     function setShowPopups(enabled: bool): void {
         SettingsStore.setNotificationToggle("showPopups", enabled)
+        preferencesChanged()
         if (!enabled && current && !currentCritical) {
             current = null
             presentationDismissRequested()
@@ -257,6 +260,7 @@ Singleton {
 
     function setAllowCriticalAlerts(enabled: bool): void {
         SettingsStore.setNotificationToggle("allowCriticalAlerts", enabled)
+        preferencesChanged()
         if (!enabled && currentCritical) {
             current = null
             presentationDismissRequested()
@@ -265,6 +269,7 @@ Singleton {
 
     function setDuration(key: string, milliseconds: real): void {
         SettingsStore.setNotificationDuration(key, milliseconds)
+        preferencesChanged()
     }
 
     function setHistoryLimit(limit: real): void {
@@ -276,6 +281,7 @@ Singleton {
     function resetPreferences(): void {
         SettingsStore.resetNotifications()
         history = history.slice(0, 50)
+        preferencesChanged()
     }
 
     function bindProvenance(notificationId, pid, availableToplevels): void {
