@@ -9,7 +9,7 @@ PanelWindow {
     id: main
 
     // Responsive: design constants target 1920x1080.
-    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
         Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: 500
     implicitWidth: Screen.width
@@ -132,10 +132,11 @@ PanelWindow {
 
         model: folderModel
 
-        property real tileWidth: width / Math.max(1, configs.number_of_pictures) - 10
+        property real tileWidth: width / Math.max(1, configs.number_of_pictures)
+            - 10 * main.uiScale
 
-        property real spacing: 10
-        property real centerSpacing: 15
+        property real spacing: 10 * main.uiScale
+        property real centerSpacing: 15 * main.uiScale
 
         property real step: tileWidth + spacing
 
@@ -274,7 +275,7 @@ PanelWindow {
                 text: "Loading..."
                 color: Zn.accent
                 anchors.centerIn: parent
-                font.pixelSize: 16
+                font.pixelSize: 16 * main.uiScale
                 transform: Shear { xFactor: -0.25 }
                 visible: img.status !== Image.Ready
             }
@@ -333,7 +334,7 @@ PanelWindow {
             Rectangle {
                 anchors.top: parent.top
                 anchors.left: parent.left
-                anchors.margins: 12
+                anchors.margins: 12 * main.uiScale
                 width: 50
                 height: 20
                 radius: 4
@@ -347,7 +348,7 @@ PanelWindow {
                     anchors.centerIn: parent
                     text: "VIDEO"
                     color: Zn.accent
-                    font.pixelSize: 9
+                    font.pixelSize: 9 * main.uiScale
                     font.weight: Font.Bold
                     font.letterSpacing: 1
                 }

@@ -16,6 +16,10 @@ PanelWindow {
     property string currentImagePath: ""
     property bool bgToggle: false
 
+    // Responsive: design constants target 1920x1080.
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
+        Math.min(main.width / 1920, main.height / 1080)))
+
     // -----------------------------------------------------
     // COVERFLOW TUNABLES
     // -----------------------------------------------------
@@ -23,7 +27,7 @@ PanelWindow {
     property real cardH: 340 * main.uiScale
     property real centerScale: 1.15
     property real edgeScale: 0.55
-    property real gapPx: 20
+    property real gapPx: 20 * main.uiScale
 
     property real skewFactor: -0.18
 
@@ -436,7 +440,7 @@ PanelWindow {
                     text: "Loading..."
                     color: Zn.accent
                     anchors.centerIn: parent
-                    font.pixelSize: 14
+                    font.pixelSize: 14 * main.uiScale
                     visible: img.status !== Image.Ready
                 }
 
@@ -490,8 +494,8 @@ PanelWindow {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.margins: 10
-                    width: 46
-                    height: 18
+                    width: 46 * main.uiScale
+                    height: 18 * main.uiScale
                     radius: 4
                     color: "#cc000000"
                     border.width: 1
@@ -503,7 +507,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "VIDEO"
                         color: Zn.accent
-                        font.pixelSize: 9
+                        font.pixelSize: 9 * main.uiScale
                         font.weight: Font.Bold
                         font.letterSpacing: 1
                     }

@@ -11,7 +11,7 @@ PanelWindow {
     id: main
 
     // Responsive: design constants target 1920x1080.
-    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
         Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
@@ -46,8 +46,8 @@ PanelWindow {
     // minimum size and the grid becomes scrollable instead.
     property real baseCardW: 220 * main.uiScale
     property real baseCardH: baseCardW * 0.866
-    property real baseHSpacing: 6
-    property real baseVSpacing: 6
+    property real baseHSpacing: 6 * main.uiScale
+    property real baseVSpacing: 6 * main.uiScale
     property real baseColStep: baseCardW * 0.75 + baseHSpacing
     property real baseRowStep: baseCardH + baseVSpacing
     property real maxGridScale: 2.5
@@ -266,7 +266,7 @@ PanelWindow {
     Flickable {
         id: grid
         anchors.fill: parent
-        anchors.margins: 60
+        anchors.margins: 60 * main.uiScale
         focus: true
         clip: true
         interactive: false

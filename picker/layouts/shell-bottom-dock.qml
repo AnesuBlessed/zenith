@@ -11,7 +11,7 @@ PanelWindow {
     id: main
 
     // Responsive: design constants target 1920x1080.
-    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
         Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
@@ -323,7 +323,7 @@ PanelWindow {
                         text: "Loading..."
                         color: Zn.accent
                         anchors.centerIn: parent
-                        font.pixelSize: 14
+                        font.pixelSize: 14 * main.uiScale
                         visible: img.status !== Image.Ready
                     }
 
@@ -380,9 +380,9 @@ PanelWindow {
                 Rectangle {
                     anchors.top: parent.top
                     anchors.left: parent.left
-                    anchors.margins: 10
-                    width: 46
-                    height: 18
+                    anchors.margins: 10 * main.uiScale
+                    width: 46 * main.uiScale
+                    height: 18 * main.uiScale
                     radius: 4
                     color: "#cc000000"
                     border.width: 1
@@ -394,7 +394,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "VIDEO"
                         color: Zn.accent
-                        font.pixelSize: 9
+                        font.pixelSize: 9 * main.uiScale
                         font.weight: Font.Bold
                         font.letterSpacing: 1
                     }

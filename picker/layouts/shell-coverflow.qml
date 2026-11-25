@@ -11,7 +11,7 @@ PanelWindow {
     id: main
 
     // Responsive: design constants target 1920x1080.
-    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
         Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
@@ -27,7 +27,7 @@ PanelWindow {
     property real cardH: 340 * main.uiScale
     property real centerScale: 1.15
     property real edgeScale: 0.55
-    property real gapPx: 20  // small, clearly visible constant gap between EVERY pair of cards
+    property real gapPx: 20 * main.uiScale  // screen-scaled gap between every pair of cards
 
     property real skewFactor: -0.18
 
@@ -424,7 +424,7 @@ PanelWindow {
                     text: "Loading..."
                     color: Zn.accent
                     anchors.centerIn: parent
-                    font.pixelSize: 14
+                    font.pixelSize: 14 * main.uiScale
                     visible: img.status !== Image.Ready
                 }
 
@@ -479,8 +479,8 @@ PanelWindow {
                     anchors.top: parent.top
                     anchors.left: parent.left
                     anchors.margins: 10
-                    width: 46
-                    height: 18
+                    width: 46 * main.uiScale
+                    height: 18 * main.uiScale
                     radius: 4
                     color: "#cc000000"
                     border.width: 1
@@ -492,7 +492,7 @@ PanelWindow {
                         anchors.centerIn: parent
                         text: "VIDEO"
                         color: Zn.accent
-                        font.pixelSize: 9
+                        font.pixelSize: 9 * main.uiScale
                         font.weight: Font.Bold
                         font.letterSpacing: 1
                     }
@@ -542,16 +542,16 @@ PanelWindow {
         id: headerColumn
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.top: parent.top
-        anchors.topMargin: 60
-        spacing: 6
+        anchors.topMargin: 60 * main.uiScale
+        spacing: 6 * main.uiScale
         z: 200
 
         Text {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "ZENITH"
             color: Zn.text
-            font.pixelSize: 60
-            font.letterSpacing: 12
+            font.pixelSize: 60 * main.uiScale
+            font.letterSpacing: 12 * main.uiScale
             font.family: "sans-serif"
             font.capitalization: Font.AllUppercase
             style: Text.Raised
@@ -562,8 +562,8 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "WALLPAPERS"
             color: Zn.text
-            font.pixelSize: 16
-            font.letterSpacing: 4
+            font.pixelSize: 16 * main.uiScale
+            font.letterSpacing: 4 * main.uiScale
             font.family: "sans-serif"
         }
 
@@ -571,12 +571,12 @@ PanelWindow {
             anchors.horizontalCenter: parent.horizontalCenter
             text: "Super + W to change · Enter to apply"
             color: Zn.text
-            font.pixelSize: 14
-            font.letterSpacing: 3
+            font.pixelSize: 14 * main.uiScale
+            font.letterSpacing: 3 * main.uiScale
             font.family: "sans-serif"
         }
 
-        Item { width: 1; height: 14 }
+        Item { width: 1; height: 14 * main.uiScale }
 
     }
 }

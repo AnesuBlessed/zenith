@@ -12,7 +12,7 @@ PanelWindow {
     id: main
 
     // Responsive: design constants target 1920x1080.
-    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
         Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
@@ -361,7 +361,7 @@ PanelWindow {
 
                     Rectangle {
                         anchors.fill: parent
-                        anchors.margins: 8
+                        anchors.margins: 8 * main.uiScale
                         radius: 8
                         color: Zn.bg
                         
@@ -385,7 +385,7 @@ PanelWindow {
                             anchors.centerIn: parent
                             text: gridImg.status === Image.Error ? (isVideo ? "🎬" : "✖") : ""
                             color: Zn.muted
-                            font.pixelSize: 20
+                            font.pixelSize: 20 * main.uiScale
                             visible: gridImg.status !== Image.Ready
                         }
 
@@ -398,9 +398,9 @@ PanelWindow {
                         Rectangle {
                             anchors.top: parent.top
                             anchors.left: parent.left
-                            anchors.margins: 8
-                            width: 42
-                            height: 16
+                            anchors.margins: 8 * main.uiScale
+                            width: 42 * main.uiScale
+                            height: 16 * main.uiScale
                             radius: 3
                             color: "#cc000000"
                             border.width: 1
@@ -476,15 +476,15 @@ PanelWindow {
 
             Column {
                 anchors.centerIn: parent
-                spacing: 32
+                spacing: 32 * main.uiScale
 
                 Column {
-                    spacing: 12
+                    spacing: 12 * main.uiScale
                     
                     Text {
                         text: "CURRENTLY ACTIVE"
                         color: Zn.accent
-                        font.pixelSize: 13
+                        font.pixelSize: 13 * main.uiScale
                         font.letterSpacing: 4
                         font.weight: Font.Bold
                     }
@@ -509,12 +509,12 @@ PanelWindow {
                 }
 
                 Column {
-                    spacing: 12
+                    spacing: 12 * main.uiScale
 
                     Text {
                         text: "NEW SELECTION"
                         color: Zn.text
-                        font.pixelSize: 13
+                        font.pixelSize: 13 * main.uiScale
                         font.letterSpacing: 4
                         font.weight: Font.Bold
                     }
@@ -573,7 +573,7 @@ PanelWindow {
                             anchors.right: parent.right
                             text: "ENTER to apply · ESC to close"
                             color: Zn.muted
-                            font.pixelSize: 12
+                            font.pixelSize: 12 * main.uiScale
                         }
                     }
                 }

@@ -12,7 +12,7 @@ PanelWindow {
     id: main
 
     // Responsive: design constants target 1920x1080.
-    readonly property real uiScale: Math.max(0.7, Math.min(1.2,
+    readonly property real uiScale: Math.max(0.55, Math.min(1.35,
         Math.min(main.width / 1920, main.height / 1080)))
     implicitHeight: Screen.height
     implicitWidth: Screen.width
@@ -373,7 +373,7 @@ PanelWindow {
                                         anchors.centerIn: parent
                                         text: "Loading..."
                                         color: "#888"
-                                        font.pixelSize: 12
+                                        font.pixelSize: 12 * main.uiScale
                                         visible: cardImg.status !== Image.Ready
                                     }
 
@@ -451,7 +451,7 @@ PanelWindow {
                                 anchors.centerIn: parent
                                 text: "VIDEO"
                                 color: Zn.accent
-                                font.pixelSize: 9
+                                font.pixelSize: 9 * main.uiScale
                                 font.weight: Font.Bold
                                 font.letterSpacing: 1
                             }
