@@ -245,7 +245,7 @@ CONF
     chmod 755 /var/lib/zenith
 
     if [[ -f "$CACHE_HOME/zenith/wall.lock.png" ]]; then
-        cp -f "$CACHE_HOME/zenith/wall.lock.png" /var/lib/zenith/lock-bg.png
+        sudo cp -f "$CACHE_HOME/zenith/wall.lock.png" /var/lib/zenith/lock-bg.png
     else
         # Fresh install: derive a tinted background from a shipped wallpaper so
         # the greeter is never a black rectangle on first boot.
@@ -253,14 +253,14 @@ CONF
             \( -iname '*.jpg' -o -iname '*.jpeg' -o -iname '*.png' \) 2>/dev/null \
             | sort | head -n1 || true)
         if [[ -n "$fallback_wallpaper" ]] && command -v magick >/dev/null 2>&1; then
-            magick "$fallback_wallpaper" -auto-orient \
+            sudo magick "$fallback_wallpaper" -auto-orient \
                 -resize 1920x1080^ -gravity center -extent 1920x1080 \
                 -blur 0x14 -fill '#0a0c12' -colorize 38% \
                 /var/lib/zenith/lock-bg.png >/dev/null 2>&1 || true
         fi
     fi
     if [[ -f /var/lib/zenith/lock-bg.png ]]; then
-        chmod 644 /var/lib/zenith/lock-bg.png
+        sudo chmod 644 /var/lib/zenith/lock-bg.png
     fi
 
     # Shared palette QML consumed by Main.qml's Loader.
@@ -281,12 +281,13 @@ QtObject {
     readonly property color outlineVariant: "$(jq -r --arg g "$palette_group" '.[$g].outlineVariant // "#48464f"' "$palette_source")"
 }
 QML
-        chmod 644 /var/lib/zenith/palette.qml
+        sudo chown "$sddm_owner:$sddm_owner" /var/lib/zenith/palette.qml
+        sudo chmod 644 /var/lib/zenith/palette.qml
     fi
 
     if [[ -f "$ROOT_DIR/sddm/zenith/avatar.png" ]]; then
-        cp -f "$ROOT_DIR/sddm/zenith/avatar.png" /var/lib/zenith/avatar.png
-        chmod 644 /var/lib/zenith/avatar.png
+        sudo cp -f "$ROOT_DIR/sddm/zenith/avatar.png" /var/lib/zenith/avatar.png
+        sudo chmod 644 /var/lib/zenith/avatar.png
     fi
     sh "$ROOT_DIR/scripts/lock-status.sh" snapshot >/dev/null 2>&1 || true
 
