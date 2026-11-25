@@ -236,6 +236,11 @@ pub fn set(path: &Path, transition: &str, duration: &str, monitor: &str, reduced
         let _ = run("pkill", &["-x", "mpvpaper"]);
         ensure_daemon()?;
         let mut args: Vec<String> = vec!["img".into(), wall_str.clone()];
+        // Pin the placement: awww/swww default resize behaviour is not
+        // guaranteed to match the aspect-fill math the rofi/island crops are
+        // computed with, so make it explicit.
+        args.push("--resize".into());
+        args.push("crop".into());
         args.extend(transition_flags(transition, duration, reduced));
         if !monitor.is_empty() && monitor != "all" {
             args.push("--outputs".into());

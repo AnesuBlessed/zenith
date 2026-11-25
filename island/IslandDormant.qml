@@ -20,10 +20,11 @@ Item {
     readonly property var rightDisplayOrder:
         ["KeepAwake", "Weather"].filter(root.isActive)
     readonly property real horizontalPadding: Theme.space2
-    readonly property real sideWidth: Math.max(
-        leftItems.implicitWidth, rightItems.implicitWidth, 48)
+    // Each flank is sized by its own content (not a shared maximum), so the
+    // whole cluster is centered and the outer gaps match on both sides.
     readonly property real naturalContentWidth: restClock.implicitWidth
-        + 2 * (sideWidth + Config.island.restItemSpacing)
+        + leftItems.implicitWidth + rightItems.implicitWidth
+        + 2 * Config.island.restItemSpacing
     readonly property real availableContentWidth: Math.max(0,
         width - horizontalPadding * 2)
     readonly property real fitScale: naturalContentWidth > 0
@@ -41,8 +42,6 @@ Item {
             anchors.right: restClock.left
             anchors.rightMargin: Config.island.restItemSpacing
             anchors.verticalCenter: parent.verticalCenter
-            width: root.sideWidth
-            Layout.alignment: Qt.AlignRight
             spacing: Config.island.restItemSpacing
 
             Repeater {
@@ -71,8 +70,6 @@ Item {
             anchors.left: restClock.right
             anchors.leftMargin: Config.island.restItemSpacing
             anchors.verticalCenter: parent.verticalCenter
-            width: root.sideWidth
-            Layout.alignment: Qt.AlignLeft
             spacing: Config.island.restItemSpacing
 
             Repeater {
