@@ -78,6 +78,30 @@ pub fn is_video(path: &Path) -> bool {
     )
 }
 
+/// Accepts plain paths and file:// URLs (QML models hand both around).
+fn url_to_path(path: &Path) -> PathBuf {
+    let raw = path.to_string_lossy().to_string();
+    let Some(rest) = raw.strip_prefix("file://") else {
+        return path.to_path_buf();
+    };
+    let decoded = rest.split('?').next().unwrap_or(rest);
+    let bytes = decoded.as_bytes();
+    let mut out = String::with_capacity(decoded.len());
+    let mut i = 0;
+    while i < bytes.len() {
+        if bytes[i] == b'%' && i + 2 < bytes.len() {
+            if let Ok(value) = u8::from_str_radix(&decoded[i + 1..i + 3], 16) {
+                out.push(value as char);
+                i += 3;
+                continue;
+            }
+        }
+        out.push(bytes[i] as char);
+        i += 1;
+    }
+    PathBuf::from(out)
+}
+
 fn daemon_running() -> bool {
     run("swww", &["query"]).is_ok_and(|o| o.status.success())
 }
@@ -183,7 +207,7 @@ fn still_for(path: &Path) -> Option<PathBuf> {
 /// Applies a wallpaper and refreshes every derived artefact (palette, Hyprland
 /// colours, terminal theme, rofi tokens, launcher crops, state file).
 pub fn set(path: &Path, transition: &str, duration: &str, monitor: &str, reduced: bool) -> Result {
-    let wall = path.canonicalize()?;
+    let wall = url_to_path(path).canonicalize()?;
     if !wall.is_file() {
         return Err(error(format!("Wallpaper not found: {}", path.display())));
     }

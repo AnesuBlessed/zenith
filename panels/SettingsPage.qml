@@ -66,6 +66,7 @@ Item {
     onIslandEditorChanged: Qt.callLater(() => settingsScroll.contentY = 0)
     readonly property var sections: [
         { id: "appearance", icon: "󰏘", label: "Appearance" },
+        { id: "wallpaper", icon: "󰸉", label: "Wallpaper" },
         { id: "island", icon: "󰇄", label: "Island & Motion" },
         { id: "idle", icon: "󰅶", label: "Power & Idle" },
         { id: "displays", icon: "󰍹", label: "Displays" },

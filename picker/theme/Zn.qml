@@ -84,9 +84,13 @@ QtObject {
         }
     }
 
-    function apply(path: string): void {
-        if (!path)
+    function apply(raw: string): void {
+        if (!raw)
             return
+        // QML models may hand us a file:// URL; native only accepts local paths.
+        let path = String(raw)
+        if (path.indexOf("file://") === 0)
+            path = decodeURIComponent(path.substring(7))
         // Detached: the picker quits immediately after this call, and the
         // wallpaper transaction (swww + palette + crops + hyprctl) must
         // outlive the short-lived picker process.
