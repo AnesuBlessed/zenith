@@ -183,6 +183,12 @@ chmod +x "$ROOT_DIR/scripts/"*.sh
 
 # Terminal, prompt and fastfetch
 [[ -f "$ROOT_DIR/foot/foot.ini" ]] && cp -f "$ROOT_DIR/foot/foot.ini" "$CONFIG_HOME/foot/foot.ini"
+# foot.ini includes colors.ini unconditionally; seed a neutral default so foot
+# never starts with an include error. The wallpaper transaction overwrites it.
+if [[ ! -f "$CONFIG_HOME/foot/colors.ini" ]]; then
+    printf '[colors-dark]\nbackground=121217\nforeground=e6e1e9\n' \
+        > "$CONFIG_HOME/foot/colors.ini"
+fi
 mkdir -p "$CONFIG_HOME/zenith/fastfetch"
 cp -rf "$ROOT_DIR/fastfetch/." "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
 # fastfetch reads ~/.config/fastfetch; point it at the Zenith copy so the

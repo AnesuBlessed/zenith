@@ -51,7 +51,6 @@
     {
       "type": "shell",
       "key": "  󰆍 Shell",
-      "format": "{3} {1}",
       "keyColor": "magenta"
     },
     {
@@ -111,23 +110,21 @@
     {
       "type": "localip",
       "key": "  󰩟 IP",
-      "format": "{4}",
       "keyColor": "green"
     },
     {
       "type": "locale",
       "key": "  󰗊 Locale",
-      "format": "{2}",
       "keyColor": "green"
     },
     "break",
     {
       "type": "custom",
-      "format": "  {#cyan}✦ Throughout Heaven and Earth,{#reset}"
+      "format": "  {#cyan}✦ Throughout Heaven and Earth,"
     },
     {
       "type": "custom",
-      "format": "  {#cyan}  I Alone Am the Chosen One{#reset}"
+      "format": "  {#cyan}  I Alone Am the Chosen One"
     },
     "break",
     {
