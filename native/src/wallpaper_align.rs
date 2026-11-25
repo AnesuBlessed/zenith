@@ -164,6 +164,7 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
         &cache_dir.join("wall.lock.png"))?;
 
     generate_avatar(&cache_dir.join("avatar.png"), &[])?;
+    generate_power_icon(&cache_dir.join("power.png"))?;
 
     Ok(())
 }
@@ -267,4 +268,54 @@ fn save_atomic(image: &DynamicImage, path: &Path) -> Result {
         let _ = fs::remove_file(&temp);
     }
     result
+}
+/// Draws the lock-screen power symbol (circle arc with a gap at the top +
+/// vertical stem) as a raster PNG. Glyph-based icons kept failing to render
+/// in hyprlock's font stack, so the button is now pure pixels: whatever the
+/// system fonts do, this always shows.
+pub fn generate_power_icon(path: &Path) -> Result {
+    const S: u32 = 64;
+    let cx = 32.0f32;
+    let cy = 36.0f32;
+    let r = 18.0f32;
+    let half_thick = 2.5f32;
+    // Gap half-angle at the top of the circle (the stem passes through it)
+    let gap = 0.9f32; // radians around -90 degrees
+
+    let mut img = image::RgbaImage::new(S, S);
+    for y in 0..S {
+        for x in 0..S {
+            let fx = x as f32 + 0.5;
+            let fy = y as f32 + 0.5;
+            let dx = fx - cx;
+            let dy = fy - cy;
+            let dist = (dx * dx + dy * dy).sqrt();
+
+            let mut on = false;
+            // Stem: vertical bar from above the circle top down to centre
+            if fx >= cx - 2.5 && fx <= cx + 2.5 && fy >= 6.0 && fy <= cy + 2.0 {
+                on = true;
+            }
+            // Ring: only outside the top gap
+            if (dist - r).abs() <= half_thick {
+                let mut ang = dy.atan2(dx); // -pi..pi, top = -pi/2
+                if ang > -std::f32::consts::FRAC_PI_2 - gap
+                    && ang < -std::f32::consts::FRAC_PI_2 + gap
+                {
+                    // Inside the gap: only the stem shows
+                } else {
+                    on = true;
+                }
+            }
+
+            if on {
+                // Soft antialiasing via distance to the stem edges
+                let px = img.get_pixel_mut(x, y);
+                // Near-white to match the lock screen text
+                *px = image::Rgba([220, 230, 245, 255]);
+            }
+        }
+    }
+
+    save_atomic(&DynamicImage::ImageRgba8(img), path)
 }

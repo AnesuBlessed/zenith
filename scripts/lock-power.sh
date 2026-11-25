@@ -32,21 +32,21 @@ case "$1" in
     STATE="$(_get_state)"
     case "$2" in
       power)
-        # U+23FB (⏻) is missing from Nerd Fonts — use md-power (󰐥) instead,
-        # otherwise hyprlock renders a broken fallback glyph.
+        # Glyph kept only as the click target; the visible icon is the
+        # generated power.png (hyprlock's font stack broke nerd glyphs).
         if [ "$STATE" = "open" ]; then printf '✕'; else printf '󰐥'; fi
         ;;
       suspend)
-        [ "$STATE" = "open" ] && printf '󰒲  Suspend' || printf ''
+        [ "$STATE" = "open" ] && printf 'Suspend' || printf ''
         ;;
       reboot)
-        [ "$STATE" = "open" ] && printf '󰑓  Reboot' || printf ''
+        [ "$STATE" = "open" ] && printf 'Reboot' || printf ''
         ;;
       shutdown)
-        [ "$STATE" = "open" ] && printf '󰐥  Shutdown' || printf ''
+        [ "$STATE" = "open" ] && printf 'Shutdown' || printf ''
         ;;
       cancel)
-        [ "$STATE" = "open" ] && printf '󰅙  Cancel' || printf ''
+        [ "$STATE" = "open" ] && printf 'Cancel' || printf ''
         ;;
     esac
     ;;
