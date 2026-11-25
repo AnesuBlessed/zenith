@@ -1,5 +1,5 @@
 use crate::{config::*, palette, thumbs, wallpaper_align};
-use std::{collections::HashSet, fs, path::{Path, PathBuf}, process::{Command, Stdio}, thread, time::Duration};
+use std::{collections::HashSet, path::{Path, PathBuf}, process::{Command, Stdio}, thread, time::Duration};
 
 #[derive(Clone, Debug)]
 pub struct WallpaperItem {

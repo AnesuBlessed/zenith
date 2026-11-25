@@ -117,7 +117,9 @@ for pkg in "${AUR_OPTIONAL[@]}"; do
 done
 
 log_info "Installing optional video-wallpaper backend (mpvpaper)..."
-"$AUR_HELPER" -S --needed --noconfirm --ask 4 mpvpaper 2>/dev/null \
+# mpvpaper ships in the CachyOS repos — plain pacman honors --ask 4, so the
+# libmpv provider prompt never blocks; the AUR helper re-asks interactively.
+sudo pacman -S --needed --noconfirm --ask 4 mpvpaper 2>/dev/null \
     || log_warn "mpvpaper unavailable; animated video wallpapers stay disabled."
 
 # -----------------------------------------------------------------------------
