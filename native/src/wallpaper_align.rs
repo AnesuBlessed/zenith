@@ -72,8 +72,13 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let win_x = (mon.width.saturating_sub(win_w)) / 2;
     let win_y = (mon.height.saturating_sub(win_h)) / 2;
 
+    // Rofi's window border (2px on every side) insets the content box, so the
+    // banner element is 480x(win_h-4). Cropping exactly that size keeps the
+    // background-image 1:1 — if the crop were the full window height, rofi's
+    // "height" sizing would rescale it (~1% shrink) and shift it ~2px, breaking
+    // the seam against the desktop.
     let pane_w = pane_w.min(screen.width()).max(1);
-    let launcher_h = win_h.min(screen.height()).max(1);
+    let launcher_h = win_h.saturating_sub(4).min(screen.height()).max(1);
     // The banner background starts inside the window's 2px border (padding is 0).
     let launcher_crop_x = (win_x + 2 + delta_x).min(screen.width().saturating_sub(pane_w));
     let launcher_crop_y = (win_y + 2 + delta_y).min(screen.height().saturating_sub(launcher_h));
