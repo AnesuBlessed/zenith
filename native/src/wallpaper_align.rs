@@ -154,20 +154,27 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     let lock_bg = screen
         .crop_imm(0, 0, mon.width.min(screen.width()), mon.height.min(screen.height()))
         .blur(14.0);
-    let mut lock_tinted = lock_bg.to_rgba8();
-    for p in lock_tinted.pixels_mut() {
+    let lock_tinted = lock_bg.to_rgba8();
+    let mut lock_tinted2 = lock_tinted.clone();
+    for p in lock_tinted2.pixels_mut() {
         p[0] = (p[0] as f32 * 0.62) as u8;
         p[1] = (p[1] as f32 * 0.62) as u8;
         p[2] = (p[2] as f32 * 0.66) as u8;
     }
-    save_atomic(&DynamicImage::ImageRgba8(lock_tinted),
+    save_atomic(&DynamicImage::ImageRgba8(lock_tinted2),
         &cache_dir.join("wall.lock.png"))?;
 
     // SDDM greeter runs as its own user and cannot read $HOME, so mirror
     // the lock background into a world-readable staging path it can load.
     let sddm_dir = std::path::Path::new("/var/lib/zenith");
     if sddm_dir.is_dir() {
-        let _ = save_atomic(&DynamicImage::ImageRgba8(lock_tinted.clone()),
+        let mut lock_tinted = lock_tinted;
+        for p in lock_tinted.pixels_mut() {
+            p[0] = (p[0] as f32 * 0.62) as u8;
+            p[1] = (p[1] as f32 * 0.62) as u8;
+            p[2] = (p[2] as f32 * 0.66) as u8;
+        }
+        let _ = save_atomic(&DynamicImage::ImageRgba8(lock_tinted),
             &sddm_dir.join("lock-bg.png"));
     }
 
@@ -306,7 +313,7 @@ pub fn generate_power_icon(path: &Path) -> Result {
             }
             // Ring: only outside the top gap
             if (dist - r).abs() <= half_thick {
-                let mut ang = dy.atan2(dx); // -pi..pi, top = -pi/2
+                let ang = dy.atan2(dx); // -pi..pi, top = -pi/2
                 if ang > -std::f32::consts::FRAC_PI_2 - gap
                     && ang < -std::f32::consts::FRAC_PI_2 + gap
                 {
