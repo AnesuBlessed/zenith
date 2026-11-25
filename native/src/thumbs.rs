@@ -54,6 +54,12 @@ pub fn picker_dir() -> PathBuf {
 /// Flat symlink index consumed by the QML picker, whose FolderListModel cannot
 /// recurse into the bundled wallpaper subdirectories. Names are de-duplicated
 /// because two categories may contain a file with the same basename.
+/// Public wrapper: `wallpaper list` reports each item's thumbnail file name
+/// (the picker index naming, which dedupes collisions).
+pub fn unique_names_public() -> Vec<String> {
+    unique_names(&crate::wallpaper::discover())
+}
+
 fn unique_names(items: &[crate::wallpaper::WallpaperItem]) -> Vec<String> {
     let mut used = std::collections::HashSet::new();
     // Thumbnail files are named after the stem, so two different extensions

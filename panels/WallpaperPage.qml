@@ -46,12 +46,12 @@ Item {
 
     ColumnLayout {
         anchors.fill: parent
-        spacing: Theme.space2
+        spacing: Theme.space1
 
         RowLayout {
             Layout.fillWidth: true
-            Layout.preferredHeight: 42
-            spacing: Theme.space2
+            Layout.preferredHeight: 40
+            spacing: Theme.space1
 
             ColumnLayout {
                 // Nested layouts are expansive by default. Keep the heading at
@@ -181,7 +181,9 @@ Item {
             GridView {
                 id: gallery
                 anchors.fill: parent
-                anchors.margins: Theme.space2
+                // Tight grid: the island margins already breathe around this
+                // container; extra padding here just starves the cards.
+                anchors.margins: Theme.space1
                 clip: true
                 model: root.filteredWallpapers
                 cellWidth: width / Config.wallpaper.galleryColumns
@@ -196,7 +198,7 @@ Item {
 
                     WallpaperCard {
                         anchors.fill: parent
-                        anchors.margins: 4
+                        anchors.margins: 2
                         wallpaper: modelData
                         current: root.selectionMode
                             ? modelData.source === IdentityService.personalImageSource.toString()

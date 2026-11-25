@@ -22,12 +22,20 @@ Rectangle {
 
     Image {
         anchors.fill: parent
-        source: root.wallpaper.source
+        // Prefer the shared 500px JPEG thumbnail (fast decode, tiny RAM);
+        // fall back to the original once if the thumbnail is missing.
+        source: root.wallpaper.thumb || root.wallpaper.source
         asynchronous: true
-        cache: true
+        cache: false
         fillMode: Image.PreserveAspectCrop
-        sourceSize.width: 420
-        sourceSize.height: 250
+        // Bound by the card's real size — never decode 420×250 into a
+        // ~120×126 slot.
+        sourceSize.width: root.width
+        sourceSize.height: root.height
+        onStatusChanged: if (status === Image.Error
+                && root.wallpaper.thumb
+                && source !== root.wallpaper.source)
+            source = root.wallpaper.source
     }
 
     Rectangle {

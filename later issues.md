@@ -154,6 +154,26 @@ and launcher rail on every wallpaper change (~200–600 ms on the N4000).
 radius/3, upscales back — visually equivalent (the upscale adds smoothness)
 and roughly 3× faster.
 
+### Island wallpaper page (applied same day)
+
+31. **The island's wallpaper gallery decoded full-resolution originals.**
+`panels/WallpaperCard.qml` loaded `source: <original 4K file>` with a fixed
+420×250 decode and `cache: true` — the pixmap cache held every discovered
+wallpaper at that size for the life of the page, and PNG originals still
+paid a full decode before scaling. **Applied:** `zenith-native wallpaper
+list` now reports `path<TAB>thumb-name` (picker-index naming, so deduped);
+`WallpaperService` exposes `thumb:` on each row and the card prefers the
+shared 500px JPEG thumbnail, falling back to the original on error; the
+decode is now bound to the card's real size (~120×126) and `cache: false`
+so unloaded pages keep nothing.
+
+32. **The gallery had three stacked layers of padding.** Island page
+margins (12px) + grid `anchors.margins` (8px) + per-card margins (4px) =
+24px of dead chrome around cards that are only ~120px wide. **Applied:**
+page spacing `space2 → space1`, header row 42 → 40px, grid margins 8 → 4px,
+card margins 4 → 2px. Cards gain visible area without changing the island's
+outer frame.
+
 ### RAM budget reality check
 
 Even perfect code cannot beat the compositor: Hyprland + GPU framebuffers

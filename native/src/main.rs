@@ -35,8 +35,21 @@ fn dispatch(args: &[String]) -> Result {
             let sub = rest.first().map(String::as_str).unwrap_or("list");
             match sub {
                 "list" => {
-                    for item in wallpaper::discover() {
-                        println!("{}", item.path.display());
+                    // `path<TAB>thumb`: the island gallery decodes the shared
+                    // 500px JPEG thumbnails instead of the full originals.
+                    let names = thumbs::unique_names_public();
+                    let items = wallpaper::discover();
+                    for (item, name) in items.iter().zip(names.iter()) {
+                        let thumb = if wallpaper::is_video(&item.path) {
+                            let stem = Path::new(name)
+                                .file_stem()
+                                .map(|s| s.to_string_lossy().into_owned())
+                                .unwrap_or_default();
+                            format!("{stem}.jpg")
+                        } else {
+                            name.clone()
+                        };
+                        println!("{}\t{}", item.path.display(), thumb);
                     }
                     Ok(())
                 }
