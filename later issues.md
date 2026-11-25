@@ -174,6 +174,39 @@ page spacing `space2 → space1`, header row 42 → 40px, grid margins 8 → 4px
 card margins 4 → 2px. Cards gain visible area without changing the island's
 outer frame.
 
+### Picker scaling pass (applied same day)
+
+33. **Two layouts referenced `uiScale` without ever defining it.**
+`shell-coverflow-minimal.qml` and `shell-floating-minimal.qml` multiplied
+their card sizes by `main.uiScale`, which did not exist on their root —
+every dimension resolved to NaN, so those two layouts rendered collapsed
+whenever selected. **Applied:** the definition was added to both.
+
+34. **The scale clamp was too narrow for extreme screens.** `0.7–1.2`
+of `min(w/1920, h/1080)` pinned 4K screens to 1.2 (cards still small on a
+huge monitor) and small screens to 0.7 (cards could overflow a 1024-wide
+panel). **Applied:** clamp widened to `0.55–1.35` in all ten layouts.
+
+35. **Leftover fixed-pixel constants in the layouts.** The coverflow gap,
+header (60/16/14px + letterSpacing), classic's row spacing and margins,
+the bottom-dock badge, grid-view's detail panel rhythm (32/12/13/20px) and
+hexcomb's grid margins/spacing were all unscaled — on a 1366×768 screen
+they read ~40% too large relative to the scaled cards. **Applied:** every
+remaining fixed constant now multiplies by `uiScale`.
+
+### Status summary of the original items
+
+- Items **9** (zero-Python rule) — fixed (dev tool removed from the repo).
+- Items **13–17** (SDDM/lock) — fixed and superseded by the SilentSDDM
+  engine vendoring.
+- Items **18–35** (performance + scaling audit) — fixed in this pass.
+- Items **1–8** (notification service data model) — the display layer was
+  replaced by the Rust/C engine, but the service internals remain as
+  described: history is still memory-only (`history.length` counts unread),
+  the provenance observer is still inert, multi-action cards still expose
+  one action, and `persistenceSupported` still over-advertises. These are
+  behavior/feature work, not performance — still open, still deliberate.
+
 ### RAM budget reality check
 
 Even perfect code cannot beat the compositor: Hyprland + GPU framebuffers
