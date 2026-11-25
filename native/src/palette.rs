@@ -350,7 +350,7 @@ fn write_sddm_palette(document: &Value) -> Result {
         token(document, group, "outlineVariant"),
     );
     let path = shared.join("palette.qml");
-    if fs::read_to_string(&path).as_deref() == Ok(qml.as_str()) {
+    if fs::read_to_string(&path).is_ok_and(|existing| existing == qml) {
         return Ok(());
     }
     atomic(&path, qml)
