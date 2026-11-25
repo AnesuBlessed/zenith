@@ -209,6 +209,34 @@ else
     ln -sfn "$CONFIG_HOME/zenith/fastfetch" "$CONFIG_HOME/fastfetch"
 fi
 
+# Zenith Display font (lock screen + terminal + SDDM). Installed system-wide
+# so both the user session and the SDDM greeter can resolve it.
+if [[ -f "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" ]]; then
+    sudo mkdir -p /usr/share/fonts/zenith
+    sudo cp -f "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" /usr/share/fonts/zenith/
+    sudo fc-cache -f /usr/share/fonts/zenith >/dev/null 2>&1 || fc-cache -f >/dev/null 2>&1 || true
+fi
+
+# SDDM greeter theme (login screen mirrors the lock screen)
+if [[ -d "$ROOT_DIR/sddm/zenith" ]] && systemctl list-unit-files sddm.service >/dev/null 2>&1; then
+    sudo mkdir -p /usr/share/sddm/themes
+    sudo rm -rf /usr/share/sddm/themes/zenith
+    sudo cp -r "$ROOT_DIR/sddm/zenith" /usr/share/sddm/themes/
+    sudo mkdir -p /etc/sddm.conf.d
+    printf '[Theme]\nCurrent=zenith\n' | sudo tee /etc/sddm.conf.d/zenith-theme.conf >/dev/null
+    # Greeter runs as the sddm user and cannot read $HOME, so wallpapers are
+    # mirrored by the native engine into a world-readable staging dir.
+    sudo mkdir -p /var/lib/zenith
+    sudo chown "$USER:$USER" /var/lib/zenith
+    chmod 755 /var/lib/zenith
+    if [[ -f "$CACHE_HOME/zenith/wall.lock.png" ]]; then
+        cp -f "$CACHE_HOME/zenith/wall.lock.png" /var/lib/zenith/lock-bg.png
+        chmod 644 /var/lib/zenith/lock-bg.png
+    fi
+    sudo fc-cache -f >/dev/null 2>&1 || true
+    log_ok "SDDM greeter deployed (login screen matches the lock screen)."
+fi
+
 # Avatar placeholder for hyprlock
 AVATAR="$CONFIG_HOME/zenith/assets/avatar.png"
 if [[ ! -s "$AVATAR" ]]; then

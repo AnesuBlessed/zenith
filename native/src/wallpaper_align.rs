@@ -163,6 +163,14 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
     save_atomic(&DynamicImage::ImageRgba8(lock_tinted),
         &cache_dir.join("wall.lock.png"))?;
 
+    // SDDM greeter runs as its own user and cannot read $HOME, so mirror
+    // the lock background into a world-readable staging path it can load.
+    let sddm_dir = std::path::Path::new("/var/lib/zenith");
+    if sddm_dir.is_dir() {
+        let _ = save_atomic(&DynamicImage::ImageRgba8(lock_tinted.clone()),
+            &sddm_dir.join("lock-bg.png"));
+    }
+
     generate_avatar(&cache_dir.join("avatar.png"), &[])?;
     generate_power_icon(&cache_dir.join("power.png"))?;
 
