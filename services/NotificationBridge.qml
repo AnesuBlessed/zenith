@@ -76,6 +76,10 @@ Singleton {
                 icon: String(entry?.appIcon || "").slice(0, 512),
                 image: String(entry?.image || "").slice(0, 512),
                 critical: !!entry?.critical,
+                // Every labeled action becomes a card button (drip-style
+                // yes/no rows), capped at three by the engine.
+                actionLabels: actions.slice(0, 3).map(action =>
+                    root.plain(action.text || "").slice(0, 120)),
                 actionLabel: actions.length > 0
                     ? root.plain(actions[0].text).slice(0, 120) : "",
                 width: Math.max(320, Config.island.mediaWidth - 24),

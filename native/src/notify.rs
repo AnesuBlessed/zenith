@@ -20,7 +20,8 @@ use std::{
 
 const MAX_VISIBLE: usize = 3;
 const TICK_MS: u64 = 8;
-const SNAPSHOT_MS: u64 = 16;
+const IDLE_TICK_MS: u64 = 100;
+const SNAPSHOT_MS: u64 = 32;
 
 fn runtime_dir() -> PathBuf {
     env::var_os("XDG_RUNTIME_DIR")
@@ -111,7 +112,7 @@ struct Card {
     icon: String,
     image: String,
     critical: bool,
-    action_label: String,
+    action_labels: Vec<String>,
     width: f64,
     height: f64,
     gap: f64,
@@ -162,7 +163,26 @@ fn card_from_value(value: &Value) -> Card {
         icon: json_string(value, "icon"),
         image: json_string(value, "image"),
         critical: value.get("critical").and_then(Value::as_bool).unwrap_or(false),
-        action_label: json_string(value, "actionLabel"),
+        action_labels: value
+            .get("actionLabels")
+            .and_then(Value::as_array)
+            .map(|values| {
+                values
+                    .iter()
+                    .filter_map(Value::as_str)
+                    .filter(|label| !label.is_empty())
+                    .take(3)
+                    .map(|label| label.to_string())
+                    .collect()
+            })
+            .unwrap_or_else(|| {
+                let single = json_string(value, "actionLabel");
+                if single.is_empty() {
+                    Vec::new()
+                } else {
+                    vec![single]
+                }
+            }),
         width: json_number(value, "width", 720.0),
         height: json_number(value, "height", 74.0),
         gap: json_number(value, "gap", 8.0),
@@ -211,7 +231,7 @@ impl Engine {
                 existing.icon = fresh.icon;
                 existing.image = fresh.image;
                 existing.critical = fresh.critical;
-                existing.action_label = fresh.action_label;
+                existing.action_labels = fresh.action_labels;
                 existing.width = fresh.width;
                 existing.height = fresh.height;
                 existing.gap = fresh.gap;
@@ -284,7 +304,12 @@ impl Engine {
                     "icon": card.icon,
                     "image": card.image,
                     "critical": card.critical,
-                    "actionLabel": card.action_label,
+                    "actionLabels": card.action_labels,
+                    "actionLabel": card
+                        .action_labels
+                        .first()
+                        .cloned()
+                        .unwrap_or_default(),
                     "x": 0.0,
                     "y": card.y.value(),
                     "width": card.width,
@@ -434,6 +459,11 @@ pub fn daemon() -> Result {
         last = now;
         engine.tick(elapsed.as_secs_f64().min(0.05));
 
+        // While nothing is on screen the daemon rests: a 100ms sleep keeps
+        // command handling responsive (accept() is polled each loop) without
+        // paying a 125Hz wakeup on the battery.
+        let idle = engine.cards.is_empty() && engine.expired.is_empty();
+
         since_snapshot += elapsed;
         if since_snapshot >= Duration::from_millis(SNAPSHOT_MS) {
             let snapshot = engine.snapshot().to_string();
@@ -444,7 +474,7 @@ pub fn daemon() -> Result {
             }
             since_snapshot = Duration::ZERO;
         }
-        thread::sleep(Duration::from_millis(TICK_MS));
+        thread::sleep(Duration::from_millis(if idle { IDLE_TICK_MS } else { TICK_MS }));
     }
 
     let _ = fs::remove_file(&sock);

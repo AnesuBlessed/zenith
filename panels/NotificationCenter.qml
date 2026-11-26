@@ -6,6 +6,10 @@ import "../services"
 Item {
     id: root
 
+    // Opening the center is the "seen" moment: the bell/chip clear here.
+    onVisibleChanged: if (visible) NotificationService.markAllRead()
+    Component.onCompleted: if (visible) NotificationService.markAllRead()
+
     ColumnLayout {
         anchors.fill: parent
         spacing: Theme.space1

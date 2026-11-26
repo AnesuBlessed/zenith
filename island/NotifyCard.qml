@@ -130,31 +130,45 @@ Item {
                 }
             }
 
-            Rectangle {
-                visible: String(root.modelData?.actionLabel || "").length > 0
-                Layout.preferredWidth: visible ? actionLabel.implicitWidth
-                    + Theme.space3 : 0
-                Layout.preferredHeight: 30
-                radius: Theme.radiusSmall
-                color: actionPointer.hovered ? Theme.primaryContainer
-                    : Theme.surfaceContainer
+            // Drip-style action row: every labeled action the app sent is a
+            // real button, not just the first one.
+            Row {
+                visible: (root.modelData?.actionLabels || []).length > 0
+                spacing: Theme.space1
 
-                Text {
-                    id: actionLabel
-                    anchors.centerIn: parent
-                    text: root.modelData?.actionLabel || ""
-                    color: actionPointer.hovered
-                        ? Theme.primaryContainerText : Theme.surfaceText
-                    font.family: Config.appearance.fontFamily
-                    font.pixelSize: Theme.textSmall
-                    font.weight: Font.Medium
-                }
+                Repeater {
+                    model: (root.modelData?.actionLabels || []).slice(0, 2)
 
-                HoverHandler { id: actionPointer }
-                TapHandler {
-                    onTapped: {
-                        if (root.entry)
-                            NotificationService.invokeAction(root.entry, 0)
+                    delegate: Rectangle {
+                        required property string modelData
+                        readonly property int actionIndex:
+                            (root.modelData?.actionLabels || []).indexOf(modelData)
+                        Layout.alignment: Qt.AlignVCenter
+                        width: actionText.implicitWidth + Theme.space3
+                        height: 30
+                        radius: Theme.radiusSmall
+                        color: actionPointer.hovered ? Theme.primaryContainer
+                            : Theme.surfaceContainer
+
+                        Text {
+                            id: actionText
+                            anchors.centerIn: parent
+                            text: parent.modelData
+                            color: actionPointer.hovered
+                                ? Theme.primaryContainerText : Theme.surfaceText
+                            font.family: Config.appearance.fontFamily
+                            font.pixelSize: Theme.textSmall
+                            font.weight: Font.Medium
+                        }
+
+                        HoverHandler { id: actionPointer }
+                        TapHandler {
+                            onTapped: {
+                                if (root.entry)
+                                    NotificationService.invokeAction(root.entry,
+                                        parent.actionIndex)
+                            }
+                        }
                     }
                 }
             }

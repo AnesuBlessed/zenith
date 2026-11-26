@@ -62,6 +62,36 @@ QtObject {
             ? "" : String(value)
     }
 
+    // Provenance by app identity: match a notification's desktopEntry/appName
+    // against live toplevel classes. Exact-window focus stays honest because
+    // activate() revalidates the snapshot against the live toplevel list.
+    function identityProvenance(desktopEntry, appName, availableToplevels): var {
+        const wanted = String(desktopEntry || "").toLowerCase()
+            .replace(/\.desktop$/, "")
+        const wantedName = String(appName || "").toLowerCase()
+        if (!wanted && !wantedName)
+            return null
+        const candidates = (availableToplevels || toplevels).filter(toplevel => {
+            const ipc = toplevel?.lastIpcObject || {}
+            if (!validAddress(toplevel?.lastIpcObject?.address || toplevel?.address))
+                return false
+            const cls = String(ipc.class || "").toLowerCase()
+            const initial = String(ipc.initialClass || "").toLowerCase()
+            const appId = String(toplevel?.wayland?.appId || "").toLowerCase()
+            return (wanted && (cls === wanted || initial === wanted || appId === wanted))
+                || (wantedName && (cls === wantedName || initial === wantedName
+                    || appId === wantedName))
+        })
+        if (candidates.length === 0)
+            return null
+        // Prefer the focused window of the app, then any candidate.
+        const focused = candidates.find(candidate => candidate?.activated)
+        const candidate = focused || candidates[0]
+        return { address: String(candidate.lastIpcObject?.address || candidate.address),
+            pid: Number(candidate.lastIpcObject?.pid) || 0,
+            stableId: stableClientId(candidate) }
+    }
+
     function snapshotToplevelForPid(pid: int, availableToplevels): var {
         const requestedPid = Number(pid)
         if (!Number.isInteger(requestedPid) || requestedPid <= 0)

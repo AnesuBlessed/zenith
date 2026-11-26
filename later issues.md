@@ -216,3 +216,84 @@ alone are ~150–250 MB. The realistic ladder on the N4000 machine:
 - After #26 + #27: ~600–700 MB
 - Plus smaller foot scrollback (`scrollback: 10000` → lines) and closing
   idle portals: **~450–600 MB** ✅
+
+## Drip rebuild pass — notification stack (jrnxf/drip → Zenith)
+
+### What drip does (macOS reference)
+Cards drop from the notch: a spring-animated stack (max ~3), an overflow
+chip counting what waits below, hover freezes timers, actions are real
+buttons on the card, and a card can update in place (building → passed)
+without restarting its animation. Delivery is a CLI contract
+(`drip ok/warn/run`), history survives restarts, and clicking a card
+returns to the producing app.
+
+### What the previous agent already shipped (verified in this pass)
+- `native/src/notify.rs` — display-only Rust engine: additive damped
+  springs (velocity survives an interrupted retarget, drip rule), bounded
+  3-card stack, hover freeze (`hold`/`release`), timeout expiry, atomic
+  JSON snapshot at ~60 fps, Unix-socket command protocol.
+- `native/zenith-notifyctl.c` — thin C client so QML and shell scripts
+  share one stable entry point.
+- `services/NotificationBridge.qml` — forwards service popups to the
+  engine and mirrors its snapshot into QML.
+- `island/NotifyStack.qml` + `island/NotifyCard.qml` — QML renders the
+  engine-sampled cards on the existing island surface. The old
+  single-card banner (`island/IslandNotification.qml`) is gone.
+
+### Fixed in this pass (the old service problems, items 1–8)
+
+36. **The provenance observer is gone, replaced by identity provenance.**
+    The old `scripts/notification-provenance.sh` sat blocked on stdin that
+    nothing ever wrote (no `stdinEnabled`, wrong event schema, wrong
+    arity), so exact-window focus silently never worked. **Applied:**
+    helper and observer deleted; `HyprlandService.identityProvenance()`
+    now snapshots a live toplevel matched by `desktopEntry`/`appName`
+    against window classes at receive time. `activate()` still
+    revalidates against the live toplevel list, so a closed window never
+    gets focused — clicking a card goes back to the producing app, drip
+    style.
+
+37. **History is now persistent.** `NotificationService` serializes plain
+    data (no D-Bus sources/actions) to
+    `$XDG_STATE_HOME/zenith/notifications.json` on every change, restores
+    it at startup, and drops entries older than two days. A shell reload
+    no longer wipes the Notification Center.
+
+38. **`unread` is now a real counter.** The bell glyph, dashboard chip
+    read `history.length` before (closed notifications kept the light on).
+    They read `unread`, which increments on arrival and clears the moment
+    the Notification Center is seen.
+
+39. **Every labeled action is now a real button.** The engine wire format
+    carries `actionLabels[]` (up to 3), the bridge forwards all of them,
+    and `NotifyCard` renders a drip-style button row instead of only the
+    first action. The Notification Center history card still shows one
+    action — acceptable there, cards are the primary surface.
+
+40. **Capability advertising now tells the truth.** The server advertised
+    markup/images support while `plainText()` strips them all; apps could
+    send rich bodies that rendered as tag soup. Now advertises plain
+    bodies only.
+
+41. **The dead `coexistenceMode`/`takeOverServer` flag is gone.** There
+    was no fallback listener; flipping the flag just silently stopped
+    receiving notifications.
+
+42. **Idle cost of the engine dropped.** The daemon looped at 125 Hz even
+    with no cards (always-awake wakeups on battery) and rewrote its
+    snapshot at 60 fps. Now: 8 ms ticks while presenting, 100 ms when
+    idle, snapshots at 30 fps and only on content change.
+
+43. **Cards hold while locked, replay on unlock (drip ScreenLock).**
+    `scripts/lock.sh` sends `hold` before hyprlock and `release` when it
+    exits — timers freeze, nothing expires invisibly, queued cards drop
+    in when you get back.
+
+### Still open (documented, deliberate)
+- **Lock-screen notification surface:** hyprlock has no way to render
+  cards; hold/replay is the honest equivalent until hyprlock grows one.
+- **Update-in-place via key reuse:** the engine already morphs an
+  existing card (springs survive) when an app reuses the id, but no
+  recipe/CLI contract like `drip run` exists for scripts. A future
+  `zenith-notifyctl sync` CLI sugar could add the `drip ok` experience.
+- **Notification Center card actions:** single action (see #39).

@@ -151,8 +151,8 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: NotificationService.count > 0 ? "󰂚" : "󰂜"
-                        color: NotificationService.count > 0 ? Theme.primary
+                        text: NotificationService.unread > 0 ? "󰂚" : "󰂜"
+                        color: NotificationService.unread > 0 ? Theme.primary
                             : root.notificationsOpen ? Theme.primaryContainerText
                             : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily

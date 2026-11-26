@@ -3,6 +3,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import Quickshell
 import Quickshell.Io
+import QtCore
 import Quickshell.Services.Notifications
 import "../core"
 
@@ -10,25 +11,24 @@ Singleton {
     id: root
 
     readonly property bool serverEnabled: Config.notifications.enabled
-        && Config.notifications.takeOverServer
-    readonly property bool coexistenceMode: Config.notifications.enabled
-        && !Config.notifications.takeOverServer
     readonly property bool doNotDisturb: Config.notifications.doNotDisturb
     property var history: []
     property var current: null
-    // The D-Bus reply can reach the observer just before Quickshell delivers
-    // the matching Notification object. Keep only a short, bounded in-memory
-    // handoff so that ordering race does not discard exact provenance.
-    property var pendingProvenance: ({})
     property var pendingExactFocus: null
     property var pendingTransientDismiss: null
-    property bool provenanceRestartPending: false
-    readonly property string provenanceHelperPath:
-        Quickshell.shellDir + "/scripts/notification-provenance.sh"
 
+    // Unread = entries that arrived but have never been seen in the
+    // Notification Center. The bell and the dashboard chip light on this,
+    // not on the raw history length.
+    property int unread: 0
     readonly property int count: history.length
     readonly property bool hasCurrent: current !== null
     readonly property bool currentCritical: current?.critical ?? false
+
+    // History survives shell reloads. Live entries (with a D-Bus source) are
+    // serialized without their source/actions; entries restored from disk
+    // are passive history only. FileView owns the atomic write below.
+    property bool historyLoaded: false
 
     signal presentationRequested(bool critical)
     signal presentationDismissRequested()
@@ -74,8 +74,12 @@ Singleton {
             active: true
         }
 
+        entry.provenance = HyprlandService.identityProvenance(
+            entry.desktopEntry, entry.appName)
         history = [entry].concat(history.filter(existing => existing.id !== entry.id))
             .slice(0, Config.notifications.historyLimit)
+        unread += 1
+        persistHistory()
         notification.closed.connect(reason => markClosed(entry.id, entry.timestamp))
 
         const shouldPresent = entry.critical
@@ -87,12 +91,68 @@ Singleton {
         }
     }
 
+    function markAllRead(): void {
+        if (unread === 0)
+            return
+        unread = 0
+    }
+
+    function serializeEntry(entry): var {
+        // Live D-Bus objects cannot cross a reload; keep plain data only.
+        return {
+            id: entry.id,
+            appName: entry.appName,
+            appIcon: entry.appIcon,
+            desktopEntry: entry.desktopEntry || "",
+            image: entry.image || "",
+            title: entry.title,
+            body: entry.body,
+            urgency: entry.urgency ?? 1,
+            critical: !!entry.critical,
+            timestamp: entry.timestamp,
+            provenance: entry.provenance || null,
+            active: !!entry.active
+        }
+    }
+
+    function persistHistory(): void {
+        if (!historyLoaded)
+            return
+        historyFile.setText(JSON.stringify({
+            version: 1,
+            unread: unread,
+            history: history.slice(0, Config.notifications.historyLimit)
+                .map(entry => serializeEntry(entry))
+        }))
+    }
+
+    function loadHistory(): void {
+        let parsed = null
+        try {
+            parsed = JSON.parse(historyFile.text() || "{}")
+        } catch (error) {
+            parsed = null
+        }
+        if (parsed && parsed.version === 1 && Array.isArray(parsed.history)) {
+            // Restored entries have no live D-Bus source; clear their action
+            // list (actions cannot survive a reload) and drop entries older
+            // than two days so stale rows never resurface as popups.
+            const cutoff = Date.now() - 2 * 24 * 60 * 60 * 1000
+            history = parsed.history.filter(entry => Number(entry.timestamp) >= cutoff)
+                .map(entry => Object.assign({}, entry, { source: null, actions: [] }))
+            unread = Math.min(Number(parsed.unread || 0), history.filter(
+                entry => entry.active).length)
+        }
+        historyLoaded = true
+    }
+
     function markClosed(id: int, timestamp: double): void {
         history = history.map(entry => {
             if (entry.id !== id || entry.timestamp !== timestamp)
                 return entry
             return Object.assign({}, entry, { active: false, source: null, actions: [] })
         })
+        persistHistory()
         if (current?.id === id && current?.timestamp === timestamp) {
             current = null
             presentationDismissRequested()
@@ -118,28 +178,6 @@ Singleton {
     function visibleActions(entry): var {
         return (entry?.actions || []).filter(action =>
             plainText(action?.text || "").length > 0)
-    }
-
-    function takePendingProvenance(notificationId): var {
-        const key = String(notificationId)
-        const pending = pendingProvenance[key]
-        if (!pending)
-            return null
-        const updated = Object.assign({}, pendingProvenance)
-        delete updated[key]
-        pendingProvenance = updated
-        return Date.now() - pending.timestamp <= 2000 ? pending.provenance : null
-    }
-
-    function cachePendingProvenance(notificationId, provenance): void {
-        const key = String(notificationId)
-        const updated = Object.assign({}, pendingProvenance)
-        updated[key] = { provenance: provenance, timestamp: Date.now() }
-        const keys = Object.keys(updated).sort((left, right) =>
-            updated[left].timestamp - updated[right].timestamp)
-        while (keys.length > 32)
-            delete updated[keys.shift()]
-        pendingProvenance = updated
     }
 
     function queueExactFocus(provenance): void {
@@ -195,6 +233,7 @@ Singleton {
             entry.source.dismiss()
         history = history.filter(existing => existing.id !== entry.id
             || existing.timestamp !== entry.timestamp)
+        persistHistory()
         if (current?.id === entry.id && current?.timestamp === entry.timestamp) {
             current = null
             presentationDismissRequested()
@@ -234,6 +273,8 @@ Singleton {
             presentationDismissRequested()
         current = null
         history = []
+        unread = 0
+        persistHistory()
     }
 
     function toggleDoNotDisturb(): void {
@@ -284,51 +325,7 @@ Singleton {
         preferencesChanged()
     }
 
-    function bindProvenance(notificationId, pid, availableToplevels): void {
-        const id = Number(notificationId)
-        const senderPid = Number(pid)
-        if (!Number.isInteger(id) || id <= 0 || !Number.isInteger(senderPid)
-                || senderPid <= 0)
-            return
-        const provenance = HyprlandService.snapshotToplevelForPid(senderPid,
-            availableToplevels)
-        if (!provenance)
-            return
-        const index = history.findIndex(entry => entry.id === id
-            && entry.provenance === null)
-        if (index < 0) {
-            cachePendingProvenance(id, provenance)
-            return
-        }
-        const updated = history.slice()
-        updated[index] = Object.assign({}, updated[index], { provenance: provenance })
-        history = updated
-        if (current?.id === id && current?.timestamp === updated[index].timestamp)
-            current = updated[index]
-    }
-
-    function startProvenanceObserver(): void {
-        if (!serverEnabled || provenanceProcess.running)
-            return
-        provenanceRestartPending = false
-        provenanceProcess.command = ["bash", provenanceHelperPath]
-        provenanceProcess.running = true
-    }
-
-    onServerEnabledChanged: {
-        if (serverEnabled)
-            startProvenanceObserver()
-        else if (provenanceProcess.running)
-            provenanceProcess.signal(15)
-    }
-
-    Component.onCompleted: startProvenanceObserver()
-
-    property Timer provenanceRestartTimer: Timer {
-        interval: 3000
-        repeat: false
-        onTriggered: root.startProvenanceObserver()
-    }
+    Component.onCompleted: loadHistory()
 
     property Timer exactFocusTimer: Timer {
         // IslandController releases HyprlandFocusGrab after Animations.fast.
@@ -342,26 +339,15 @@ Singleton {
         }
     }
 
-    property Process provenanceProcess: Process {
-        running: false
-        stdout: SplitParser {
-            onRead: line => {
-                try {
-                    const event = JSON.parse(line)
-                    if (event?.version === 1 && event?.event === "provenance"
-                            && Object.keys(event).length === 4)
-                        root.bindProvenance(event.notificationId, event.pid)
-                } catch (error) {
-                    console.warn("Zenith notification provenance parse failed")
-                }
-            }
-        }
-        onExited: (exitCode, exitStatus) => {
-            if (root.serverEnabled && !root.provenanceRestartPending) {
-                root.provenanceRestartPending = true
-                root.provenanceRestartTimer.restart()
-            }
-        }
+    property FileView historyFile: FileView {
+        path: StandardPaths.writableLocation(
+            StandardPaths.GenericStateLocation) + "/zenith/notifications.json"
+        watchChanges: false
+        blockWrites: true
+        atomicWrites: true
+        printErrors: false
+        onSaveFailed: error => console.warn("Zenith notification history:",
+            FileViewError.toString(error))
     }
 
     Instantiator {
@@ -371,12 +357,12 @@ Singleton {
             keepOnReload: false
             persistenceSupported: true
             bodySupported: true
-            bodyMarkupSupported: true
+            bodyMarkupSupported: false
             bodyHyperlinksSupported: false
-            bodyImagesSupported: true
+            bodyImagesSupported: false
             actionsSupported: true
-            actionIconsSupported: true
-            imageSupported: true
+            actionIconsSupported: false
+            imageSupported: false
             inlineReplySupported: false
 
             onNotification: notification => root.receive(notification)

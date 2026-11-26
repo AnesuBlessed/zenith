@@ -288,7 +288,6 @@ QtObject {
 
     readonly property QtObject notifications: QtObject {
         readonly property bool enabled: true
-        readonly property bool takeOverServer: true
         readonly property bool showPopups: SettingsStore.boolValue(
             "notifications", "showPopups", true)
         readonly property bool allowCriticalAlerts: SettingsStore.boolValue(

@@ -191,8 +191,8 @@ RowLayout {
                     font.letterSpacing: 1
                 }
                 Text {
-                    visible: NotificationService.count > 0
-                    text: NotificationService.count.toString()
+                    visible: NotificationService.unread > 0
+                    text: NotificationService.unread.toString()
                     color: Theme.primary
                     font.family: Config.appearance.monoFontFamily
                     font.pixelSize: Config.island.expandedPixelSize(9, false)
