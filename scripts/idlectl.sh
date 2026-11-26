@@ -78,6 +78,27 @@ case "$cmd" in
         restart_idle
         ;;
 
+    inhibit)
+        # Keep Awake: every listener disabled. hypridle keeps running (lock_cmd
+        # stays wired for loginctl lock-session) but nothing fires on timeout.
+        write_config 0 0 0 0 0 0
+        echo "INHIBITED=true"
+        restart_idle
+        ;;
+
+    resume)
+        # Back to the policy currently configured in Zenith settings.
+        dim="${2:-0}"; lock="${3:-0}"; display="${4:-0}"
+        suspend="${5:-0}"; hibernate="${6:-0}"; percent="${7:-30}"
+        require_uint dim "$dim"; require_uint lock "$lock"; require_uint display "$display"
+        require_uint suspend "$suspend"; require_uint hibernate "$hibernate"
+        require_uint percent "$percent"
+        if (( percent < 5 || percent > 90 )); then percent=30; fi
+        write_config "$dim" "$lock" "$display" "$suspend" "$hibernate" "$percent"
+        echo "INHIBITED=false"
+        restart_idle
+        ;;
+
     remove)
         if [[ -f "$CONFIG" ]] && grep -qF "$MARKER" "$CONFIG"; then
             cat > "$CONFIG" <<DEFAULT

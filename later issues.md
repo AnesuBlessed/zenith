@@ -297,3 +297,13 @@ returns to the producing app.
   recipe/CLI contract like `drip run` exists for scripts. A future
   `zenith-notifyctl sync` CLI sugar could add the `drip ok` experience.
 - **Notification Center card actions:** single action (see #39).
+
+### Island rest-row Keep Awake (applied)
+
+44. **The coffee (Keep Awake) icon was cosmetic.** `IdleService.toggleInhibition()`
+    flipped a local boolean — hypridle kept its lock/dim/dpms/suspend timers, so
+    the screen still slept with the coffee "on". **Applied:** `idlectl.sh`
+    gained `inhibit` (rewrites the managed policy with every listener disabled)
+    and `resume` (restores the configured policy); the service runs the real
+    transaction, only flips `inhibited` when the helper confirms, and policy
+    edits made while inhibited re-assert inhibition afterwards.

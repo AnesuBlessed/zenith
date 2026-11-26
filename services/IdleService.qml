@@ -43,9 +43,22 @@ QtObject {
         }
     }
 
+    // Keep Awake is real now: the helper rewrites the hypridle policy with
+    // every listener disabled (inhibit) or restores the configured policy
+    // (resume). The boolean only flips once the helper confirms.
     function toggleInhibition(): void {
-        inhibited = !inhibited
-        inhibitionChanged(inhibited)
+        if (busy)
+            return
+        busy = true
+        errorMessage = ""
+        if (!inhibited) {
+            pendingAction = "inhibit"
+            process.command = [helperPath, "inhibit"]
+        } else {
+            pendingAction = "resume"
+            process.command = policyArguments("resume")
+        }
+        process.running = true
     }
 
     function policyArguments(command: string): var {
@@ -129,6 +142,27 @@ QtObject {
             }
             root.errorMessage = ""
             root.installed = root.lastOutput.includes("MANAGED=true")
+
+            if (action === "inhibit") {
+                root.inhibited = true
+                root.inhibitionChanged(true)
+            } else if (action === "resume") {
+                root.inhibited = false
+                root.inhibitionChanged(false)
+            }
+
+            // Policy edits made while Keep Awake is active restore inhibition
+            // right after the new policy is written.
+            if (root.inhibited && action === "apply")
+                Qt.callLater(() => {
+                    if (root.inhibited && !root.busy) {
+                        root.busy = true
+                        root.pendingAction = "inhibit"
+                        root.process.command = [root.helperPath, "inhibit"]
+                        root.process.running = true
+                    }
+                })
+
             if (action === "probe" && Config.idle.managed && !root.installed)
                 Qt.callLater(() => root.applyPolicy())
             else if (root.applyQueued && Config.idle.managed)
