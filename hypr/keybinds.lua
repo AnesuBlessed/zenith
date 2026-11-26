@@ -6,29 +6,39 @@
 local mainMod = "SUPER"
 local paths   = require("paths")
 
-local raw_bind = hl.raw_bind or hl.bind
-local raw_unbind = hl.unbind
-hl.unbind = function(combo)
-    return pcall(raw_unbind, keys(combo))
-end
-hl.raw_bind = raw_bind
-hl.bind = function(combo, action, opts)
-    combo = keys(combo)
-    pcall(hl.unbind, combo)
-    if opts then
-        return raw_bind(combo, action, opts)
-    end
-    return raw_bind(combo, action)
-end
-
 local zenith_ctl = paths.quote(paths.root .. "/build/zenith-ctl")
 local zenith_lock = paths.script("lock.sh")
 
 -- Hyprland's bind parser expects modifier strings without spaces around
 -- the plus ("SUPER+SHIFT+Q"). Normalize every combo through here so a
--- spaced typo can never silently kill a bind.
+-- spaced form can never silently kill a bind. Must be defined BEFORE the
+-- wrappers below (a later local would leave the wrapper calling a nil
+-- global — that was the emergency-mode trip).
 local function keys(combo)
-    return (combo:gsub("%s*%+%s*", "+"))
+    if type(combo) ~= "string" then
+        return combo
+    end
+    local ok, out = pcall(function()
+        return (combo:gsub("%s*%+%s*", "+"))
+    end)
+    if ok and type(out) == "string" then
+        return out
+    end
+    return combo
+end
+
+local raw_bind = hl.raw_bind or hl.bind
+local raw_unbind = hl.unbind
+hl.raw_bind = raw_bind
+hl.bind = function(combo, action, opts)
+    combo = keys(combo)
+    if raw_unbind then
+        pcall(raw_unbind, combo)
+    end
+    if opts then
+        return raw_bind(combo, action, opts)
+    end
+    return raw_bind(combo, action)
 end
 
 -- Run compound commands through bash so pipes, && and || never depend on how
