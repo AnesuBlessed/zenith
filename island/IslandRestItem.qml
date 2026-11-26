@@ -8,6 +8,7 @@ Item {
     id: root
     required property string itemId
     property bool powerHovered: false
+    property bool keepAwakeHovered: false
     signal powerRequested()
     signal captureRequested()
     implicitWidth: contentLoader.item?.implicitWidth ?? 0
@@ -64,6 +65,9 @@ Item {
                 color: IdleService.inhibited ? Theme.error : Theme.surfaceText
                 font.family: Config.appearance.monoFontFamily
                 font.pixelSize: Math.round(11 * Config.island.restIconScale)
+            }
+            HoverHandler {
+                onHoveredChanged: root.keepAwakeHovered = hovered
             }
             TapHandler { onTapped: IdleService.toggleInhibition() }
         }

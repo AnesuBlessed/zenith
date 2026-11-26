@@ -8,6 +8,7 @@ Item {
     signal powerRequested()
     signal captureRequested()
     property bool powerHovered: false
+    property bool keepAwakeHovered: false
     // PowerProfile on the left, Clock centered, Weather/KeepAwake on the right.
     // Inactive items (e.g. Weather with no data) are removed entirely instead
     // of hidden, so no phantom gap pushes the cluster off-center.
@@ -53,6 +54,8 @@ Item {
                     Layout.preferredHeight: implicitHeight
                     onPowerHoveredChanged: if (itemId === "PowerProfile")
                         root.powerHovered = powerHovered
+                    onKeepAwakeHoveredChanged: if (itemId === "KeepAwake")
+                        root.keepAwakeHovered = keepAwakeHovered
                     onPowerRequested: root.powerRequested()
                     onCaptureRequested: root.captureRequested()
                 }
@@ -81,6 +84,8 @@ Item {
                     Layout.preferredHeight: implicitHeight
                     onPowerHoveredChanged: if (itemId === "PowerProfile")
                         root.powerHovered = powerHovered
+                    onKeepAwakeHoveredChanged: if (itemId === "KeepAwake")
+                        root.keepAwakeHovered = keepAwakeHovered
                     onPowerRequested: root.powerRequested()
                     onCaptureRequested: root.captureRequested()
                 }

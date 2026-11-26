@@ -315,6 +315,8 @@ PanelWindow {
                 && islandController.visualState !== islandController.notification
                 && !(islandController.visualState === islandController.dormant
                     && dormantContent.powerHovered)
+                && !(islandController.visualState === islandController.dormant
+                    && dormantContent.keepAwakeHovered)
             onTapped: islandController.toggleExpanded()
         }
 
