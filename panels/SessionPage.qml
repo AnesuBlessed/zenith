@@ -19,7 +19,6 @@ FocusScope {
             title: "Lock",
             detail: "Secure this session",
             icon: "󰌾",
-            available: SessionService.lockAvailable,
             confirmation: false,
             destructive: false
         },
@@ -28,7 +27,6 @@ FocusScope {
             title: "Suspend",
             detail: "Sleep in memory",
             icon: "󰒲",
-            available: SessionService.suspendAvailable,
             confirmation: false,
             destructive: false
         },
@@ -37,7 +35,6 @@ FocusScope {
             title: "Hibernate",
             detail: "Save session to disk",
             icon: "󰤄",
-            available: SessionService.hibernateAvailable,
             confirmation: true,
             destructive: false
         },
@@ -46,7 +43,6 @@ FocusScope {
             title: "Log out",
             detail: "End the Hyprland session",
             icon: "󰍃",
-            available: SessionService.logoutAvailable,
             confirmation: true,
             destructive: false
         },
@@ -55,7 +51,6 @@ FocusScope {
             title: "Restart",
             detail: "Restart this computer",
             icon: "󰜉",
-            available: SessionService.rebootAvailable,
             confirmation: true,
             destructive: false
         },
@@ -64,7 +59,6 @@ FocusScope {
             title: "Shut down",
             detail: "Power off this computer",
             icon: "󰐥",
-            available: SessionService.shutdownAvailable,
             confirmation: true,
             destructive: true
         }
@@ -91,7 +85,7 @@ FocusScope {
 
     function requestAction(index: int): void {
         const entry = actions[index]
-        if (!entry || !entry.available || SessionService.executing)
+        if (!entry || !SessionService.isAvailable(entry.action) || SessionService.executing)
             return
         currentIndex = index
         if (entry.confirmation) {
@@ -233,7 +227,7 @@ FocusScope {
                     Layout.fillWidth: true
                     Layout.fillHeight: true
                     radius: Theme.radiusLarge
-                    opacity: modelData.available ? 1 : 0.42
+                    opacity: SessionService.isAvailable(modelData.action) ? 1 : 0.42
                     color: selected || actionHover.hovered
                         ? Theme.surfaceContainerHigh
                         : Qt.alpha(Theme.surfaceContainer, 0.74)
@@ -277,7 +271,7 @@ FocusScope {
                         }
                         Text {
                             Layout.fillWidth: true
-                            text: modelData.available ? modelData.detail : "Unavailable"
+                            text: SessionService.isAvailable(modelData.action) ? modelData.detail : "Unavailable"
                             color: Theme.surfaceVariantText
                             font.family: Config.appearance.fontFamily
                             font.pixelSize: Config.island.expandedPixelSize(Theme.textSmall, false)
@@ -287,14 +281,14 @@ FocusScope {
 
                     HoverHandler {
                         id: actionHover
-                        enabled: modelData.available
+                        enabled: SessionService.isAvailable(modelData.action)
                         onHoveredChanged: {
                             if (hovered)
                                 root.currentIndex = index
                         }
                     }
                     TapHandler {
-                        enabled: modelData.available && !root.confirmationVisible
+                        enabled: SessionService.isAvailable(modelData.action) && !root.confirmationVisible
                         onTapped: root.requestAction(index)
                     }
 

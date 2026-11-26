@@ -127,6 +127,7 @@ hl.bind(mainMod .. " + W", hl.dsp.exec_cmd(zenith_ctl .. " toggle picker"))
 hl.bind(mainMod .. " + SHIFT + W", hl.dsp.exec_cmd(paths.bin("zenith-native") .. " wallpaper random"))
 
 -- System & Session (Island Session Overlay)
+hl.bind(mainMod .. " + L", hl.dsp.exec_cmd(zenith_lock))
 hl.bind(mainMod .. " + ALT + L", hl.dsp.exec_cmd(zenith_lock))
 hl.bind(mainMod .. " + Escape", hl.dsp.exec_cmd(shell("quickshell ipc call session-page toggle")))
 hl.bind(mainMod .. " + R", hl.dsp.exec_cmd(shell(

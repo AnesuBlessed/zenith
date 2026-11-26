@@ -99,17 +99,25 @@ case "$1" in
     fi
     ;;
   greeting)
-    HOUR=$(date +%H)
-    if [ "$HOUR" -ge 5 ] && [ "$HOUR" -lt 12 ]; then
-      PART=morning; ICON='󰖙'
-    elif [ "$HOUR" -ge 12 ] && [ "$HOUR" -lt 17 ]; then
-      PART=afternoon; ICON='󰖙'
-    elif [ "$HOUR" -ge 17 ] && [ "$HOUR" -lt 22 ]; then
-      PART=evening; ICON='󰖜'
+    # Strip leading zeros so "08" doesn't trip POSIX test (octal) on /bin/sh.
+    HOUR=$(date +%H | sed 's/^0*//')
+    [ -z "$HOUR" ] && HOUR=0
+    if [ "$HOUR" -ge 22 ] || [ "$HOUR" -lt 4 ]; then
+      MSG="Burning the midnight oil"
+    elif [ "$HOUR" -ge 4 ] && [ "$HOUR" -lt 6 ]; then
+      MSG="Early bird"
+    elif [ "$HOUR" -ge 6 ] && [ "$HOUR" -lt 12 ]; then
+      MSG="Good morning"
+    elif [ "$HOUR" -ge 12 ] && [ "$HOUR" -lt 14 ]; then
+      MSG="Good day"
+    elif [ "$HOUR" -ge 14 ] && [ "$HOUR" -lt 17 ]; then
+      MSG="Good afternoon"
+    elif [ "$HOUR" -ge 17 ] && [ "$HOUR" -lt 20 ]; then
+      MSG="Good evening"
     else
-      PART=night; ICON='󰖔'
+      MSG="Good night"
     fi
-    printf '%s Good %s, %s' "$ICON" "$PART" "$USER"
+    printf '󰌾 %s, %s' "$MSG" "$USER"
     ;;
   media)
     # Requires playerctl
