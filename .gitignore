@@ -1,10 +1,12 @@
 # Build outputs & cache
 build/
 target/
+native/Cargo.lock
 *.tmp*
 .cache/
 .local/
 *.log
+nohup.out
 
 # Editor files
 .vscode/
