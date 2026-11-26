@@ -229,7 +229,7 @@ Item {
 
                     Text {
                         anchors.centerIn: parent
-                        text: "󰕮"
+                        text: "󰄨"
                         color: root.insightOpen
                             ? Theme.primaryContainerText : Theme.surfaceVariantText
                         font.family: Config.appearance.monoFontFamily
