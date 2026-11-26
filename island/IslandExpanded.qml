@@ -292,6 +292,7 @@ Item {
 
         Loader {
             active: root.notificationsOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: NotificationCenter {
@@ -302,6 +303,7 @@ Item {
 
         Loader {
             active: root.captureOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: CapturePage {
@@ -316,6 +318,7 @@ Item {
         Loader {
             id: sessionLoader
             active: root.sessionOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: SessionPage {
@@ -328,6 +331,7 @@ Item {
         Loader {
             id: settingsLoader
             active: root.settingsOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: SettingsPage {
@@ -341,6 +345,7 @@ Item {
 
         Loader {
             active: root.overviewOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: Dashboard {
@@ -353,6 +358,7 @@ Item {
         Loader {
             id: controlCenterLoader
             active: root.controlCenterOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: ControlCenter {
@@ -363,6 +369,7 @@ Item {
 
         Loader {
             active: root.insightOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: InsightCenter {
@@ -375,6 +382,7 @@ Item {
 
         Loader {
             active: root.identityPickerOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: WallpaperPage {
@@ -389,6 +397,7 @@ Item {
 
         Loader {
             active: root.clipboardOpen
+            visible: active
             Layout.fillWidth: true
             Layout.fillHeight: true
             sourceComponent: ClipboardPage {

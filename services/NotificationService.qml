@@ -70,7 +70,6 @@ Singleton {
             // Preserve unlabeled `default` actions: many applications use
             // those specifically for clicking the notification body.
             actions: (notification.actions || []).filter(action => !!action),
-            provenance: takePendingProvenance(notification.id),
             active: true
         }
 
