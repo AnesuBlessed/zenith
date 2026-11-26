@@ -83,7 +83,7 @@ PACKAGES=(
 
     # Audio, network, hardware
     pipewire pipewire-pulse wireplumber playerctl
-    bluez bluez-utils networkmanager upower
+    bluez bluez-utils networkmanager upower power-profiles-daemon
     brightnessctl pciutils wireless_tools curl polkit
 
     # Build toolchain
@@ -128,6 +128,9 @@ sudo pacman -S --needed --noconfirm --ask 4 mpvpaper 2>/dev/null \
 log_info "Enabling system services..."
 sudo systemctl enable --now NetworkManager.service
 sudo systemctl enable --now bluetooth.service
+# Quickshell's PowerProfiles API needs the daemon; without it the island's
+# Performance profile choice is greyed out and cycling does nothing.
+sudo systemctl enable --now power-profiles-daemon.service 2>/dev/null     || log_warn "power-profiles-daemon could not be enabled (tuned may own the profile API)" 
 # SDDM must be enabled on BIOS/MBR systems too, otherwise the machine boots
 # straight to a black console with no greeter.
 if systemctl list-unit-files sddm.service >/dev/null 2>&1; then

@@ -4,7 +4,10 @@
  */
 
 configuration {
-    modi:                        "drun,filebrowser,window,run";
+    /* Trimmed modi: rofi builds every listed mode at startup, so an unused
+       filebrowser was paying init cost on each open. Window/Run remain
+       reachable through Super+Tab and the mode switcher. */
+    modi:                        "drun,window,run";
     show-icons:                  true;
     display-drun:                " ";
     display-run:                 " ";

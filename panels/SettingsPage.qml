@@ -16,20 +16,13 @@ Item {
     property string stagedAccent: Config.appearance.themeSourceColor
     property string pickedAccent: ""
     property string weatherNameDraft: Config.weather.locationName
-    property string weatherLatitudeDraft: Number.isFinite(Config.weather.latitude)
-        ? Config.weather.latitude.toString() : ""
-    property string weatherLongitudeDraft: Number.isFinite(Config.weather.longitude)
-        ? Config.weather.longitude.toString() : ""
     readonly property bool weatherDraftValid: weatherNameDraft.trim().length > 0
         && weatherNameDraft.trim().length <= 100
-        && weatherLatitudeDraft.trim().length > 0
-        && weatherLongitudeDraft.trim().length > 0
-        && Number.isFinite(Number(weatherLatitudeDraft))
-        && Number(weatherLatitudeDraft) >= -90
-        && Number(weatherLatitudeDraft) <= 90
-        && Number.isFinite(Number(weatherLongitudeDraft))
-        && Number(weatherLongitudeDraft) >= -180
-        && Number(weatherLongitudeDraft) <= 180
+        && !WeatherService.geocoding
+
+    function saveWeatherLocation(): void {
+        WeatherService.saveLocation(weatherNameDraft)
+    }
     readonly property bool livePreviewActive: section === "island"
         && (islandEditor === "geometry" || islandEditor === "content")
         && pillPreviewMode !== "expanded"
@@ -993,57 +986,43 @@ Item {
                             SettingsCard {
                                 Layout.fillWidth: true
                                 title: "Weather location"
-                                detail: WeatherService.configured
-                                    ? "Saved locally for Open-Meteo forecasts"
-                                    : "Unconfigured — no forecast request is made"
-                                contentHeight: 70
-                                ColumnLayout {
+                                // Type a city name and save — Open-Meteo's
+                                // geocoder resolves it to coordinates.
+                                detail: WeatherService.geocoding
+                                    ? "Finding '" + root.weatherNameDraft + "'…"
+                                    : WeatherService.errorMessage.length > 0
+                                        ? WeatherService.errorMessage
+                                        : WeatherService.configured
+                                            ? "Saved: " + Config.weather.locationName
+                                            : "Type a city name — coordinates are found automatically"
+                                contentHeight: 38
+                                RowLayout {
                                     anchors.fill: parent
                                     spacing: Theme.space2
-                                    RowLayout {
+                                    WeatherField {
                                         Layout.fillWidth: true
-                                        spacing: Theme.space2
-                                        WeatherField {
-                                            Layout.fillWidth: true
-                                            label: "City or label"
-                                            value: root.weatherNameDraft
-                                            onEdited: value => root.weatherNameDraft = value
-                                        }
-                                        WeatherField {
-                                            Layout.preferredWidth: 112
-                                            label: "Latitude"
-                                            value: root.weatherLatitudeDraft
-                                            onEdited: value => root.weatherLatitudeDraft = value
-                                        }
-                                        WeatherField {
-                                            Layout.preferredWidth: 112
-                                            label: "Longitude"
-                                            value: root.weatherLongitudeDraft
-                                            onEdited: value => root.weatherLongitudeDraft = value
-                                        }
+                                        label: "City name"
+                                        value: root.weatherNameDraft
+                                        onEdited: value => root.weatherNameDraft = value
+                                        Keys.onReturnPressed: if (root.weatherDraftValid)
+                                            root.saveWeatherLocation()
+                                        Keys.onEnterPressed: if (root.weatherDraftValid)
+                                            root.saveWeatherLocation()
                                     }
-                                    RowLayout {
-                                        Layout.fillWidth: true
-                                        Item { Layout.fillWidth: true }
-                                        TextButton {
-                                            compact: true
-                                            text: "Clear"
-                                            enabled: WeatherService.configured
-                                            onClicked: {
-                                                SettingsStore.clearWeatherLocation()
-                                                root.weatherNameDraft = ""
-                                                root.weatherLatitudeDraft = ""
-                                                root.weatherLongitudeDraft = ""
-                                            }
-                                        }
-                                        TextButton {
-                                            compact: true
-                                            text: "Save location"
-                                            enabled: root.weatherDraftValid
-                                            onClicked: SettingsStore.setWeatherLocation(
-                                                root.weatherNameDraft,
-                                                root.weatherLatitudeDraft,
-                                                root.weatherLongitudeDraft)
+                                    TextButton {
+                                        compact: true
+                                        text: WeatherService.geocoding ? "Saving…" : "Save"
+                                        enabled: root.weatherDraftValid
+                                        onClicked: root.saveWeatherLocation()
+                                    }
+                                    TextButton {
+                                        compact: true
+                                        text: "Clear"
+                                        enabled: WeatherService.configured
+                                        && !WeatherService.geocoding
+                                        onClicked: {
+                                            SettingsStore.clearWeatherLocation()
+                                            root.weatherNameDraft = ""
                                         }
                                     }
                                 }

@@ -307,3 +307,25 @@ returns to the producing app.
     and `resume` (restores the configured policy); the service runs the real
     transaction, only flips `inhibited` when the helper confirms, and policy
     edits made while inhibited re-assert inhibition afterwards.
+
+### Island quick fixes (applied)
+
+45. **Performance profile was unusable without its daemon.** Quickshell's
+    `PowerProfiles` API is a client of `power-profiles-daemon`; with the
+    daemon missing the island showed Performance as unavailable and cycling
+    did nothing. **Applied:** the daemon is installed and enabled by
+    install.sh (tuned owning the profile API degrades to a warning).
+
+46. **Weather location: type a city name, done.** The old card demanded a
+    hand-typed latitude/longitude. **Applied:** `WeatherService.saveLocation()`
+    geocodes the city through Open-Meteo's geocoder (the same provider as
+    the forecast — no new dependency), saves "City, Country" with the
+    resolved coordinates, and the forecast refreshes immediately. The
+    settings card is a single city field now (Enter or Save); "City not
+    found" and lookup failures show in the card detail.
+
+47. **Launcher startup trimmed.** rofi builds every configured mode at
+    startup; the unused `filebrowser` mode was paying init cost on every
+    Super+Space. Modi trimmed to `drun,window,run` (window = Super+Tab,
+    run mode reachable via rofi's own mode switcher). Combined with the
+    already-present drun desktop cache, opens stay quick on the N4000.

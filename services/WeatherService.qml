@@ -8,6 +8,7 @@ QtObject {
     id: root
 
     property bool loading: false
+    property bool geocoding: false
     property bool available: false
     property string errorMessage: ""
     property string responseBuffer: ""
@@ -133,6 +134,41 @@ QtObject {
             + "&current=" + current + "&hourly=" + hourly + "&daily=" + daily
             + "&temperature_unit=" + Config.weather.temperatureUnit
             + "&timezone=auto&forecast_days=7&forecast_hours=24"
+    }
+
+    // Save a location by city name alone: Open-Meteo's geocoder (the same
+    // provider as the forecast) resolves the first match to coordinates and
+    // the saved label becomes "City, Country".
+    function saveLocation(city: string): string {
+        const name = String(city || "").trim()
+        if (name.length === 0)
+            return "WEATHER_EMPTY"
+        if (name.length > 100)
+            return "WEATHER_TOO_LONG"
+        if (geocoding)
+            return "WEATHER_BUSY"
+        geocoding = true
+        errorMessage = ""
+        geocodeRequest.command = ["curl", "--fail", "--silent", "--show-error",
+            "--max-time", "10",
+            "https://geocoding-api.open-meteo.com/v1/search?name="
+                + encodeURIComponent(name) + "&count=1&language=en&format=json"]
+        geocodeRequest.running = true
+        return "WEATHER_GEOCODING"
+    }
+
+    function handleGeocode(text): void {
+        const payload = JSON.parse(text)
+        const hit = payload?.results?.[0]
+        if (!hit || !Number.isFinite(Number(hit.latitude))
+                || !Number.isFinite(Number(hit.longitude)))
+            throw new Error("City not found")
+        const label = String(hit.name || "").slice(0, 100)
+            + (hit.country ? ", " + String(hit.country).slice(0, 60) : "")
+        if (!SettingsStore.setWeatherLocation(label,
+                Number(hit.latitude), Number(hit.longitude)))
+            throw new Error("Location could not be saved")
+        return label
     }
 
     function refresh(): void {
@@ -274,6 +310,33 @@ QtObject {
         if (code === 85 || code === 86) return "󰼶"
         if (code >= 95) return "󰙾"
         return "󰖐"
+    }
+
+    property Process geocodeRequest: Process {
+        id: geocodeRequest
+        running: false
+        property string buffer: ""
+
+        stdout: StdioCollector {
+            onStreamFinished: geocodeRequest.buffer = text
+        }
+        stderr: StdioCollector {
+            onStreamFinished: root.errorMessage = text.trim()
+        }
+        onExited: exitCode => {
+            root.geocoding = false
+            if (exitCode !== 0 || geocodeRequest.buffer.length === 0) {
+                root.errorMessage = root.errorMessage.length > 0
+                    ? root.errorMessage : "City lookup failed"
+                return
+            }
+            try {
+                root.handleGeocode(geocodeRequest.buffer)
+            } catch (error) {
+                root.errorMessage = String(error?.message || error)
+                    .replace(/^Error:\s*/, "")
+            }
+        }
     }
 
     property Process weatherRequest: Process {
