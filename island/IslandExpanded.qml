@@ -291,6 +291,7 @@ Item {
         // the resting page, so it still loads immediately.
 
         Loader {
+            asynchronous: true
             active: root.notificationsOpen
             visible: active
             Layout.fillWidth: true
@@ -302,6 +303,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             active: root.captureOpen
             visible: active
             Layout.fillWidth: true
@@ -316,6 +318,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             id: sessionLoader
             active: root.sessionOpen
             visible: active
@@ -329,6 +332,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             id: settingsLoader
             active: root.settingsOpen
             visible: active
@@ -344,6 +348,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             active: root.overviewOpen
             visible: active
             Layout.fillWidth: true
@@ -356,6 +361,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             id: controlCenterLoader
             active: root.controlCenterOpen
             visible: active
@@ -368,6 +374,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             active: root.insightOpen
             visible: active
             Layout.fillWidth: true
@@ -381,6 +388,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             active: root.identityPickerOpen
             visible: active
             Layout.fillWidth: true
@@ -396,6 +404,7 @@ Item {
         }
 
         Loader {
+            asynchronous: true
             active: root.clipboardOpen
             visible: active
             Layout.fillWidth: true

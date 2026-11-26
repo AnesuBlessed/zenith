@@ -329,3 +329,17 @@ returns to the producing app.
     Super+Space. Modi trimmed to `drun,window,run` (window = Super+Tab,
     run mode reachable via rofi's own mode switcher). Combined with the
     already-present drun desktop cache, opens stay quick on the N4000.
+
+### Keybinds + island freeze (applied)
+
+48. **Keybind combos carried spaces around the plus.** Hyprland's Lua bind
+    parser documents `"SUPER+SHIFT+Q"`; Zenith wrote `"SUPER + SHIFT + Q"`
+    throughout. The parser can silently reject the spaced form, killing
+    binds wholesale. **Applied:** every combo is normalized (`" + "` →
+    `"+"`) inside the `hl.bind`/`hl.unbind` wrappers, so the spaced style
+    keeps working regardless of parser strictness.
+
+49. **Island pages froze the UI thread on open.** The lazy `Loader`s from
+    #26 built their 200–700-line pages synchronously on first open — on the
+    N4000 that reads as a hard freeze. **Applied:** `asynchronous: true` on
+    all nine loaders; pages build off the UI thread and pop in a beat later.

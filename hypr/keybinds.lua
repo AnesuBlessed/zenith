@@ -7,8 +7,13 @@ local mainMod = "SUPER"
 local paths   = require("paths")
 
 local raw_bind = hl.raw_bind or hl.bind
+local raw_unbind = hl.unbind
+hl.unbind = function(combo)
+    return pcall(raw_unbind, keys(combo))
+end
 hl.raw_bind = raw_bind
 hl.bind = function(combo, action, opts)
+    combo = keys(combo)
     pcall(hl.unbind, combo)
     if opts then
         return raw_bind(combo, action, opts)
@@ -18,6 +23,13 @@ end
 
 local zenith_ctl = paths.quote(paths.root .. "/build/zenith-ctl")
 local zenith_lock = paths.script("lock.sh")
+
+-- Hyprland's bind parser expects modifier strings without spaces around
+-- the plus ("SUPER+SHIFT+Q"). Normalize every combo through here so a
+-- spaced typo can never silently kill a bind.
+local function keys(combo)
+    return (combo:gsub("%s*%+%s*", "+"))
+end
 
 -- Run compound commands through bash so pipes, && and || never depend on how
 -- the exec dispatcher quotes its argument.
