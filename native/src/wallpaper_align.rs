@@ -204,7 +204,7 @@ pub fn generate_alignment_crops(wall_path: &Path) -> Result {
 
 /// Writes an image through a temp file + rename so a rofi window opened
 /// mid-transaction can never read a half-written PNG.
-fn save_atomic(image: &DynamicImage, path: &Path) -> Result {
+pub fn save_atomic(image: &DynamicImage, path: &Path) -> Result {
     // Temp name keeps the .png suffix: `image::save` picks the encoder from it.
     let temp = path.with_file_name(format!(
         "{}.tmp-{}.png",

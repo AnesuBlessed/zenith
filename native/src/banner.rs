@@ -6,7 +6,7 @@
 //! through foot's sixel image support. Drawn here in Rust with `fontdue`
 //! so the result is deterministic — no ImageMagick font lookup to fail.
 
-use crate::config::{atomic, error, root};
+use crate::config::{error, root, Result};
 use fontdue::{Font, FontSettings};
 use image::{DynamicImage, Rgba, RgbaImage};
 use std::path::{Path, PathBuf};
@@ -105,6 +105,6 @@ pub fn generate(target: &Path) -> Result {
         y += line.size;
     }
 
-    atomic(&DynamicImage::ImageRgba8(img), target)?;
+    crate::wallpaper_align::save_atomic(&DynamicImage::ImageRgba8(img), target)?;
     Ok(())
 }
