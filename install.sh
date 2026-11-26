@@ -215,12 +215,28 @@ else
     ln -sfn "$CONFIG_HOME/zenith/fastfetch" "$CONFIG_HOME/fastfetch"
 fi
 
-# Zenith Display font (lock screen + terminal + SDDM). Installed system-wide
+# Zenith Display font (lock screen + SDDM). Installed system-wide
 # so both the user session and the SDDM greeter can resolve it.
 if [[ -f "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" ]]; then
     sudo mkdir -p /usr/share/fonts/zenith
     sudo cp -f "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" /usr/share/fonts/zenith/
     sudo fc-cache -f /usr/share/fonts/zenith >/dev/null 2>&1 || fc-cache -f >/dev/null 2>&1 || true
+fi
+
+# Terminal branding: foot renders ONE font for all text, so the two brand
+# elements (ZENITH heading + the Gojo quote) are rendered into a small PNG
+# in Zenith Display and shown by fastfetch through foot's sixel image
+# support. The terminal's actual text stays JetBrainsMono Nerd Font.
+if [[ -f "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" ]] && command -v magick >/dev/null 2>&1; then
+    mkdir -p "$CACHE_HOME/zenith"
+    magick -background none -size 960x420 xc:none \
+        -font "$ROOT_DIR/fonts/ZenithDisplay-Bold.ttf" \
+        -pointsize 92 -fill '#e4ebf5' -gravity northwest -annotate +8+0 'ZENITH' \
+        -pointsize 34 -fill '#9aa7b8' -gravity northwest -annotate +16+122 '— Hyprland Workstation' \
+        -pointsize 36 -fill '#7fd6e8' -gravity northwest -annotate +16+210 'Throughout Heaven and Earth,' \
+        -pointsize 36 -fill '#7fd6e8' -gravity northwest -annotate +16+256 'I Alone Am the Honored One' \
+        -trim +repage "$CACHE_HOME/zenith/zenith-fastfetch.png" \
+        || log_warn "Zenith Display fastfetch banner could not be rendered"
 fi
 
 # SDDM greeter theme (login screen mirrors the lock screen)
