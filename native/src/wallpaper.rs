@@ -368,6 +368,9 @@ pub fn ensure() -> Result {
     // Warm the picker cache (flat symlink index + thumbnails) during login so
     // the standalone picker has content the first time it opens.
     let _ = crate::thumbs::generate(false);
+    // Re-render the fastfetch brand banner in Zenith Display.
+    let _ = crate::banner::generate(
+        &crate::config::cache().join("zenith-fastfetch.png"));
     applied
 }
 
