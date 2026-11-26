@@ -79,16 +79,9 @@ QtObject {
     // Picker layout selection lives in picker/config.json (active_layout),
     // which the standalone picker watches, so changes apply without a restart.
     readonly property var pickerLayouts: [
-        "shell-bottom-dock.qml",
-        "shell-classic.qml",
         "shell-coverflow.qml",
-        "shell-coverflow-minimal.qml",
         "shell-floating.qml",
-        "shell-floating-center-reflection.qml",
-        "shell-floating-clean.qml",
-        "shell-floating-minimal.qml",
-        "shell-grid-view.qml",
-        "shell-hexcomb.qml"
+        "shell-grid-view.qml"
     ]
     property string pickerLayout: "shell-floating.qml"
 

@@ -883,11 +883,10 @@ Item {
                                 Layout.fillWidth: true
                                 title: "Picker layout"
                                 detail: "Arrangement used by the wallpaper picker (Super + W); changes apply live while it is open"
-                                // Two columns stacked downward: the island is not
-                                // widened, long layout names never wrap, and every
-                                // choice stays visible.
-                                contentHeight: 296
-                                GridLayout { Layout.fillWidth: true; columns: 2; columnSpacing: Theme.space2; rowSpacing: Theme.space2
+                                // Three layouts in one compact row, so Gallery
+                                // density below stays on screen without scrolling.
+                                contentHeight: 42
+                                GridLayout { Layout.fillWidth: true; columns: 3; columnSpacing: Theme.space1; rowSpacing: Theme.space1
                                     Repeater {
                                         model: WallpaperService.pickerLayouts
                                         delegate: SettingsChoice {
