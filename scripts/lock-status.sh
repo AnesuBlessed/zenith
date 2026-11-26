@@ -57,6 +57,60 @@ case "$1" in
       fi
     fi
     ;;
+  temp)
+    printf '%s' "$("$0" weather | awk '{print $1}' | sed 's/^+//')"
+    ;;
+  condition)
+    printf '%s' "$("$0" weather | cut -d' ' -f2-)"
+    ;;
+  hilo)
+    # H/L/feels from the Zenith weather cache (Open-Meteo via WeatherService)
+    STATE="${XDG_STATE_HOME:-$HOME/.local/state}"
+    CACHE="$STATE/zenith/weather.json"
+    [ -f "$CACHE" ] || exit 0
+    jq -r '"H " + (.highTemperature|round|tostring) + "°C  L "
+        + (.lowTemperature|round|tostring) + "°C · feels "
+        + (.apparentTemperature|round|tostring) + "°C"' "$CACHE" 2>/dev/null
+    ;;
+  wicon)
+    # Nerd-font weather glyph stored in the Zenith weather cache
+    STATE="${XDG_STATE_HOME:-$HOME/.local/state}"
+    CACHE="$STATE/zenith/weather.json"
+    if [ -f "$CACHE" ]; then
+      jq -r '.icon' "$CACHE" 2>/dev/null
+    else
+      printf '󰖙'
+    fi
+    ;;
+  ssid)
+    SSID=$(nmcli -t -f active,ssid dev wifi 2>/dev/null | awk -F: '$1=="yes"{print $2; exit}')
+    [ -z "$SSID" ] && SSID=$(iwgetid -r 2>/dev/null)
+    if [ -n "$SSID" ]; then
+      printf '%.14s' "$SSID"
+    else
+      printf 'offline'
+    fi
+    ;;
+  bt)
+    if command -v bluetoothctl >/dev/null 2>&1         && bluetoothctl show 2>/dev/null | grep -q 'Powered: yes'; then
+      printf 'Bluetooth on'
+    else
+      printf 'Bluetooth off'
+    fi
+    ;;
+  greeting)
+    HOUR=$(date +%H)
+    if [ "$HOUR" -ge 5 ] && [ "$HOUR" -lt 12 ]; then
+      PART=morning; ICON='󰖙'
+    elif [ "$HOUR" -ge 12 ] && [ "$HOUR" -lt 17 ]; then
+      PART=afternoon; ICON='󰖙'
+    elif [ "$HOUR" -ge 17 ] && [ "$HOUR" -lt 22 ]; then
+      PART=evening; ICON='󰖜'
+    else
+      PART=night; ICON='󰖔'
+    fi
+    printf '%s Good %s, %s' "$ICON" "$PART" "$USER"
+    ;;
   media)
     # Requires playerctl
     command -v playerctl >/dev/null 2>&1 || exit 0
