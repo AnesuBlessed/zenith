@@ -1,4 +1,3 @@
-mod banner;
 mod clipboard;
 mod config;
 mod notify;

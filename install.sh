@@ -203,6 +203,10 @@ if [[ ! -f "$CONFIG_HOME/foot/colors.ini" ]]; then
 fi
 mkdir -p "$CONFIG_HOME/zenith/fastfetch"
 cp -rf "$ROOT_DIR/fastfetch/." "$CONFIG_HOME/zenith/fastfetch/" 2>/dev/null || true
+# The brand banner (ZENITH heading + Gojo quote in Zenith Display) ships
+# pre-rendered with the rice; fastfetch shows it via foot's sixel support.
+mkdir -p "$CACHE_HOME/zenith"
+cp -f "$ROOT_DIR/fastfetch/zenith-fastfetch.png" "$CACHE_HOME/zenith/zenith-fastfetch.png" 2>/dev/null || true
 # fastfetch reads ~/.config/fastfetch; point it at the Zenith copy so the
 # zen logo + config actually load. If the user already has a real fastfetch
 # config directory, leave it alone and say so.
