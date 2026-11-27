@@ -1,5 +1,5 @@
 {
-  "active_layout": "shell-floating.qml",
+  "active_layout": "shell-coverflow.qml",
   "number_of_pictures": 7,
   "cache_batch_size": 20,
   "video_extensions": [

@@ -9,8 +9,10 @@ Item {
     required property string itemId
     property bool powerHovered: false
     property bool keepAwakeHovered: false
+    property bool lockHovered: false
     signal powerRequested()
     signal captureRequested()
+    signal lockRequested()
     implicitWidth: contentLoader.item?.implicitWidth ?? 0
     implicitHeight: 20
 
@@ -20,7 +22,8 @@ Item {
         sourceComponent: root.itemId === "Weather" ? weatherComponent
             : root.itemId === "Clock" ? clockComponent
             : root.itemId === "KeepAwake" ? keepAwakeComponent
-            : root.itemId === "PowerProfile" ? powerComponent : null
+            : root.itemId === "PowerProfile" ? powerComponent
+            : root.itemId === "Lock" ? lockComponent : null
     }
 
     Component {
@@ -99,6 +102,23 @@ Item {
                 onTapped: CaptureService.recording
                     ? root.captureRequested() : root.powerRequested()
             }
+        }
+    }
+
+    Component {
+        id: lockComponent
+        Item {
+            implicitWidth: 18
+            implicitHeight: 20
+            Text {
+                anchors.centerIn: parent
+                text: "󰌾"
+                color: Theme.surfaceVariantText
+                font.family: Config.appearance.monoFontFamily
+                font.pixelSize: Math.round(11 * Config.island.restIconScale)
+            }
+            HoverHandler { onHoveredChanged: root.lockHovered = hovered }
+            TapHandler { onTapped: root.lockRequested() }
         }
     }
 }

@@ -17,7 +17,7 @@ Item {
             || (Config.weather.enabled && WeatherService.available)
     }
     readonly property var leftDisplayOrder:
-        ["PowerProfile"].filter(root.isActive)
+        ["PowerProfile", "Lock"].filter(root.isActive)
     readonly property var rightDisplayOrder:
         ["KeepAwake", "Weather"].filter(root.isActive)
     readonly property real horizontalPadding: Theme.space2
@@ -56,8 +56,11 @@ Item {
                         root.powerHovered = powerHovered
                     onKeepAwakeHoveredChanged: if (itemId === "KeepAwake")
                         root.keepAwakeHovered = keepAwakeHovered
+                    onLockHoveredChanged: if (itemId === "Lock")
+                        root.lockHovered = lockHovered
                     onPowerRequested: root.powerRequested()
                     onCaptureRequested: root.captureRequested()
+                    onLockRequested: root.lockRequested()
                 }
             }
         }
@@ -86,8 +89,11 @@ Item {
                         root.powerHovered = powerHovered
                     onKeepAwakeHoveredChanged: if (itemId === "KeepAwake")
                         root.keepAwakeHovered = keepAwakeHovered
+                    onLockHoveredChanged: if (itemId === "Lock")
+                        root.lockHovered = lockHovered
                     onPowerRequested: root.powerRequested()
                     onCaptureRequested: root.captureRequested()
+                    onLockRequested: root.lockRequested()
                 }
             }
         }
